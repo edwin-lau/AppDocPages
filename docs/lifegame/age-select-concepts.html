@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Game · 年龄选择交互方案</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #12121e;
+  color: #fff;
+  font-family: -apple-system, "PingFang SC", "Noto Sans SC", sans-serif;
+  padding: 30px;
+  min-width: 1100px;
+}
+
+.page-title {
+  text-align: center;
+  font-size: 28px;
+  color: #e8c84a;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 8px rgba(232,200,74,0.3);
+}
+
+.page-sub {
+  text-align: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 40px;
+}
+
+/* ========== 方案通用 ========== */
+.scheme {
+  margin-bottom: 50px;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.scheme-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.scheme-badge {
+  background: rgba(232,200,74,0.15);
+  color: #e8c84a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(232,200,74,0.3);
+}
+
+.scheme-badge.rec {
+  background: rgba(100,220,120,0.15);
+  color: #6adc7e;
+  border-color: rgba(100,220,120,0.3);
+}
+
+.scheme-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #e8c84a;
+}
+
+.scheme-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+/* 手机模拟框 - 横屏 */
+.phone {
+  width: 1060px;
+  height: 460px;
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  box-shadow:
+    0 2px 30px rgba(0,0,0,0.6),
+    inset 0 0 80px rgba(0,0,0,0.15);
+}
+
+/* 背景 - 中国水墨画风格 */
+.ink-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    /* 天空渐变 */
+    linear-gradient(180deg,
+      #4a6a4a 0%,
+      #3d5d3d 15%,
+      #355535 30%,
+      #2d4a2d 50%,
+      #243d24 65%,
+      #1a301a 80%,
+      #122512 100%
+    );
+  /* 薄雾 */
+}
+
+.ink-bg::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 25%, rgba(255,255,255,0.06), transparent),
+    radial-gradient(ellipse 60% 40% at 30% 20%, rgba(200,210,200,0.04), transparent);
+}
+
+.ink-bg::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 100%),
+    radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.25) 100%);
+}
+
+/* 顶部金条 */
+.top-bar {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+}
+
+.bar-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(15,15,30,0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(232,200,74,0.2);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bar-chip .icon { font-size: 14px; }
+.bar-chip.gold { color: #e8c84a; }
+.bar-chip.stamina { color: #72c8f0; }
+.bar-chip.elite { color: #c77dff; }
+
+/* 装备按钮 */
+.equip-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 20;
+  background: rgba(15,15,30,0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(232,200,74,0.3);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8c84a;
+  cursor: pointer;
+}
+
+/* 标题区 */
+.title-area {
+  position: absolute;
+  top: 50px;
+  left: 0; right: 0;
+  text-align: center;
+  z-index: 10;
+}
+
+.main-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: #e8c84a;
+  text-shadow:
+    0 0 12px rgba(232,200,74,0.25),
+    2px 2px 4px rgba(0,0,0,0.5);
+  letter-spacing: 4px;
+}
+
+.sub-title {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  margin-top: 6px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  letter-spacing: 2px;
+}
+
+/* ========== 方案0：当前（参照） ========== */
+.s0-buttons {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  width: 600px;
+  z-index: 10;
+}
+
+.s0-btn {
+  background: rgba(20,20,40,0.72);
+  border: 1.5px solid rgba(232,200,74,0.4);
+  border-radius: 12px;
+  padding: 20px 38px;
+  color: #e8c84a;
+  font-size: 19px;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  cursor: pointer;
+  min-width: 150px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.s0-btn:hover {
+  background: rgba(232,200,74,0.12);
+  border-color: rgba(232,200,74,0.7);
+  transform: translateY(-2px);
+}
+
+.s0-row2 {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* ========== 方案A：角色卡片 ========== */
+.sA-buttons {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -42%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.sA-card {
+  width: 180px;
+  background: rgba(15,15,30,0.78);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(232,200,74,0.35);
+  border-radius: 14px;
+  padding: 18px 14px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.sA-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(232,200,74,0.5), transparent);
+}
+
+.sA-card:hover {
+  border-color: #e8c84a;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(232,200,74,0.2);
+  background: rgba(15,15,30,0.88);
+}
+
+.sA-age {
+  font-size: 28px;
+  font-weight: 800;
+  color: #e8c84a;
+  text-shadow: 0 0 10px rgba(232,200,74,0.2);
+  line-height: 1.1;
+}
+
+.sA-age small {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sA-theme {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 6px;
+  letter-spacing: 2px;
+}
+
+.sA-divider {
+  width: 40px;
+  height: 1px;
+  background: rgba(232,200,74,0.3);
+  margin: 10px auto 8px;
+}
+
+.sA-ids {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.7;
+}
+
+/* ========== 方案B：圆形图标 ========== */
+.sB-buttons {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -42%);
+  display: flex;
+  gap: 24px;
+  z-index: 10;
+}
+
+.sB-orb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  width: 140px;
+  transition: transform 0.25s;
+}
+
+.sB-orb:hover { transform: translateY(-5px); }
+
+.sB-circle {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(232,200,74,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  background: radial-gradient(circle at 40% 35%, rgba(50,50,80,0.9), rgba(20,20,40,0.95));
+  box-shadow:
+    0 0 20px rgba(232,200,74,0.1),
+    inset 0 0 15px rgba(232,200,74,0.08);
+  margin-bottom: 12px;
+  transition: all 0.25s;
+}
+
+.sB-orb:hover .sB-circle {
+  border-color: #e8c84a;
+  box-shadow:
+    0 0 30px rgba(232,200,74,0.25),
+    inset 0 0 20px rgba(232,200,74,0.12);
+}
+
+.sB-age {
+  font-size: 20px;
+  font-weight: 700;
+  color: #e8c84a;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.sB-label {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+/* ========== 方案C：横条列表 ========== */
+.sC-buttons {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -48%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 680px;
+  z-index: 10;
+}
+
+.sC-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(15,15,30,0.68);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(232,200,74,0.2);
+  border-radius: 12px;
+  padding: 13px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sC-row:hover {
+  background: rgba(232,200,74,0.08);
+  border-color: rgba(232,200,74,0.5);
+}
+
+.sC-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(232,200,74,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.sC-text { flex: 1; }
+
+.sC-main {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e8c84a;
+}
+
+.sC-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  margin-top: 2px;
+}
+
+.sC-arrow {
+  font-size: 18px;
+  color: rgba(232,200,74,0.4);
+}
+
+/* ========== 方案D：水墨画轴（推荐） ========== */
+.sD-buttons {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -42%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.sD-scroll {
+  width: 178px;
+  background: linear-gradient(180deg, rgba(240,230,200,0.1) 0%, rgba(200,180,140,0.06) 100%);
+  border: 1.5px solid rgba(200,170,100,0.3);
+  border-radius: 8px;
+  padding: 20px 14px 16px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s;
+}
+
+.sD-scroll::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 2.5px;
+  background: linear-gradient(90deg, transparent, rgba(200,170,100,0.6), transparent);
+}
+
+.sD-scroll::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 10%; right: 10%;
+  height: 2.5px;
+  background: linear-gradient(90deg, transparent, rgba(200,170,100,0.6), transparent);
+}
+
+.sD-scroll:hover {
+  background: linear-gradient(180deg, rgba(240,230,200,0.18) 0%, rgba(200,180,140,0.12) 100%);
+  border-color: rgba(200,170,100,0.7);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(200,170,100,0.15);
+}
+
+.sD-name {
+  font-size: 26px;
+  font-weight: 800;
+  color: #dcc480;
+  text-shadow: 0 0 8px rgba(220,196,128,0.2);
+  letter-spacing: 4px;
+}
+
+.sD-age {
+  font-size: 12px;
+  color: rgba(220,196,128,0.5);
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+.sD-line {
+  width: 50px;
+  height: 1px;
+  background: rgba(200,170,100,0.3);
+  margin: 10px auto 8px;
+}
+
+.sD-ids {
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.8;
+  letter-spacing: 0.5px;
+}
+
+/* ========== 方案E：深度解锁进度条 ========== */
+.sE-buttons {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -42%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.sE-card {
+  width: 178px;
+  background: rgba(15,15,30,0.78);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(232,200,74,0.35);
+  border-radius: 14px;
+  padding: 18px 14px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.sE-card:hover {
+  border-color: #e8c84a;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(232,200,74,0.2);
+}
+
+.sE-emoji {
+  font-size: 36px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.sE-age {
+  font-size: 20px;
+  font-weight: 800;
+  color: #e8c84a;
+}
+
+.sE-theme {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+.sE-ids {
+  margin-top: 8px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.6;
+}
+
+/* 分隔线 */
+.divider {
+  max-width: 1100px;
+  margin: 0 auto 50px;
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,200,74,0.2), transparent);
+}
+
+/* ========== 副本深度选择条优化 ========== */
+.depth-section {
+  max-width: 1100px;
+  margin: 40px auto 0;
+}
+
+.depth-title {
+  font-size: 18px;
+  color: #e8c84a;
+  margin-bottom: 4px;
+}
+
+.depth-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 16px;
+}
+
+.depth-strip {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.depth-chip {
+  min-width: 88px;
+  background: rgba(15,15,30,0.78);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(232,200,74,0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.depth-chip.active {
+  background: rgba(232,200,74,0.15);
+  border-color: #e8c84a;
+}
+
+.depth-chip .num {
+  font-size: 16px;
+  font-weight: 800;
+  color: #e8c84a;
+}
+
+.depth-chip .label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 3px;
+}
+
+.depth-chip.locked {
+  border-color: rgba(100,100,120,0.3);
+  cursor: not-allowed;
+  opacity: 0.55;
+  position: relative;
+}
+
+.depth-chip.locked .num {
+  color: rgba(255,255,255,0.3);
+}
+
+.depth-chip.locked .lock-icon {
+  font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.depth-chip.locked .remain {
+  font-size: 9px;
+  color: rgba(199,125,255,0.7);
+  margin-top: 4px;
+}
+
+/* ========== HUD 优化 ========== */
+.hud-section {
+  max-width: 1100px;
+  margin: 40px auto 0;
+}
+
+.hud-title {
+  font-size: 18px;
+  color: #e8c84a;
+  margin-bottom: 4px;
+}
+
+.hud-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 16px;
+}
+
+.hud-panel {
+  background: rgba(15,15,30,0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(232,200,74,0.15);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hud-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hud-item.gold { color: #e8c84a; }
+.hud-item.stamina { color: #72c8f0; }
+.hud-item.elite { color: #c77dff; }
+
+.hud-item .icon { font-size: 14px; }
+
+.hud-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-stat-label {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  width: 32px;
+}
+
+.hud-bar-track {
+  width: 160px;
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.hud-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s;
+}
+
+.hud-bar-fill.hp { background: linear-gradient(90deg, #e04040, #a01010); }
+.hud-bar-fill.atk { background: linear-gradient(90deg, #f0a020, #d07010); }
+.hud-bar-fill.def { background: linear-gradient(90deg, #40c0e0, #1070b0); }
+
+.hud-stat-val {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  width: 50px;
+}
+
+.hud-kills {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-kills .highlight {
+  color: #c77dff;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="page-title">🎮 Life Game · 年龄选择 & UI 交互方案</div>
+<div class="page-sub">5 种年龄选择布局 + 副本深度条优化 + HUD 精英进度</div>
+
+<!-- ==================== 方案0：当前（参照） ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-badge">📌 当前</span>
+    <span class="scheme-title">现有样式（参照对比）</span>
+  </div>
+  <p class="scheme-desc">5 个按钮排成 3+2，纯文字 "12-17岁"，信息少，视觉辨识度低</p>
+  <div class="phone">
+    <div class="ink-bg"></div>
+    <div class="top-bar">
+      <div class="bar-chip gold"><span class="icon">💰</span> 1280</div>
+      <div class="bar-chip stamina"><span class="icon">⚡</span> x4</div>
+    </div>
+    <div class="equip-btn">🎒 装备</div>
+    <div class="title-area">
+      <div class="main-title">迎接挑战</div>
+      <div class="sub-title">第一步 · 选择年龄段</div>
+    </div>
+    <div class="s0-buttons">
+      <div class="s0-btn">12-17岁</div>
+      <div class="s0-btn">18-24岁</div>
+      <div class="s0-btn">25-34岁</div>
+      <div class="s0-row2">
+        <div class="s0-btn">35-49岁</div>
+        <div class="s0-btn">50-60岁</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ==================== 方案A：角色卡片 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-badge">方案A</span>
+    <span class="scheme-title">角色卡片式</span>
+  </div>
+  <p class="scheme-desc">每张卡片 = 年龄数字 + 主题标签 + 身份列表。信息丰富，类似 RPG 角色选择面板。玩家一眼看到能选什么身份。</p>
+  <div class="phone">
+    <div class="ink-bg"></div>
+    <div class="top-bar">
+      <div class="bar-chip gold"><span class="icon">💰</span> 1280</div>
+      <div class="bar-chip stamina"><span class="icon">⚡</span> x4</div>
+      <div class="bar-chip elite"><span class="icon">💀</span> 12/20</div>
+    </div>
+    <div class="equip-btn">🎒 装备</div>
+    <div class="title-area">
+      <div class="main-title">迎接挑战</div>
+      <div class="sub-title">选择你的身份 · 开始冒险</div>
+    </div>
+    <div class="sA-buttons">
+      <div class="sA-card">
+        <div class="sA-age">12-17 <small>岁</small></div>
+        <div class="sA-theme">学生时代</div>
+        <div class="sA-divider"></div>
+        <div class="sA-ids">初中生<br>高中生</div>
+      </div>
+      <div class="sA-card">
+        <div class="sA-age">18-24 <small>岁</small></div>
+        <div class="sA-theme">青春年华</div>
+        <div class="sA-divider"></div>
+        <div class="sA-ids">大学生<br>研究生<br>基层职员</div>
+      </div>
+      <div class="sA-card">
+        <div class="sA-age">25-34 <small>岁</small></div>
+        <div class="sA-theme">职场精英</div>
+        <div class="sA-divider"></div>
+        <div class="sA-ids">企业白领<br>创意工作者<br>职场女性<br>高端服务业</div>
+      </div>
+      <div class="sA-card">
+        <div class="sA-age">35-49 <small>岁</small></div>
+        <div class="sA-theme">事业巅峰</div>
+        <div class="sA-divider"></div>
+        <div class="sA-ids">企业管理者<br>内容创作者<br>科技从业<br>商务人士</div>
+      </div>
+      <div class="sA-card">
+        <div class="sA-age">50-60 <small>岁</small></div>
+        <div class="sA-theme">人生赢家</div>
+        <div class="sA-divider"></div>
+        <div class="sA-ids">企业主/投资人<br>专业技术人员<br>都市中老年</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ==================== 方案B：圆形图标 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-badge">方案B</span>
+    <span class="scheme-title">圆形图标式</span>
+  </div>
+  <p class="scheme-desc">每个年龄段用一个圆形图标 + emoji 表示。简洁游戏感强，但信息量少。</p>
+  <div class="phone">
+    <div class="ink-bg"></div>
+    <div class="top-bar">
+      <div class="bar-chip gold"><span class="icon">💰</span> 1280</div>
+      <div class="bar-chip stamina"><span class="icon">⚡</span> x4</div>
+      <div class="bar-chip elite"><span class="icon">💀</span> 12/20</div>
+    </div>
+    <div class="equip-btn">🎒 装备</div>
+    <div class="title-area">
+      <div class="main-title">迎接挑战</div>
+      <div class="sub-title">选择你的故事</div>
+    </div>
+    <div class="sB-buttons">
+      <div class="sB-orb">
+        <div class="sB-circle">🎒</div>
+        <div class="sB-age">12-17</div>
+        <div class="sB-label">校园时代</div>
+      </div>
+      <div class="sB-orb">
+        <div class="sB-circle">🎓</div>
+        <div class="sB-age">18-24</div>
+        <div class="sB-label">青春启航</div>
+      </div>
+      <div class="sB-orb">
+        <div class="sB-circle">💼</div>
+        <div class="sB-age">25-34</div>
+        <div class="sB-label">职场打拼</div>
+      </div>
+      <div class="sB-orb">
+        <div class="sB-circle">👔</div>
+        <div class="sB-age">35-49</div>
+        <div class="sB-label">中流砥柱</div>
+      </div>
+      <div class="sB-orb">
+        <div class="sB-circle">🍵</div>
+        <div class="sB-age">50-60</div>
+        <div class="sB-label">悠然人生</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ==================== 方案C：横条列表 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-badge">方案C</span>
+    <span class="scheme-title">横条列表式</span>
+  </div>
+  <p class="scheme-desc">类似设置菜单/王者荣耀列表风格。左图标 + 文字 + 右箭头，信息密度最高，操作直觉。</p>
+  <div class="phone">
+    <div class="ink-bg"></div>
+    <div class="top-bar">
+      <div class="bar-chip gold"><span class="icon">💰</span> 1280</div>
+      <div class="bar-chip stamina"><span class="icon">⚡</span> x4</div>
+      <div class="bar-chip elite"><span class="icon">💀</span> 12/20</div>
+    </div>
+    <div class="equip-btn">🎒 装备</div>
+    <div class="title-area">
+      <div class="main-title">迎接挑战</div>
+      <div class="sub-title">选择你的时代</div>
+    </div>
+    <div class="sC-buttons">
+      <div class="sC-row">
+        <div class="sC-icon">🎒</div>
+        <div class="sC-text">
+          <div class="sC-main">12-17岁 · 学生时代</div>
+          <div class="sC-sub">初中生、高中生</div>
+        </div>
+        <div class="sC-arrow">›</div>
+      </div>
+      <div class="sC-row">
+        <div class="sC-icon">🎓</div>
+        <div class="sC-text">
+          <div class="sC-main">18-24岁 · 青春年华</div>
+          <div class="sC-sub">大学生、研究生、基层职员</div>
+        </div>
+        <div class="sC-arrow">›</div>
+      </div>
+      <div class="sC-row">
+        <div class="sC-icon">💼</div>
+        <div class="sC-text">
+          <div class="sC-main">25-34岁 · 职场精英</div>
+          <div class="sC-sub">企业白领、创意工作者、职场女性、高端服务业</div>
+        </div>
+        <div class="sC-arrow">›</div>
+      </div>
+      <div class="sC-row">
+        <div class="sC-icon">👔</div>
+        <div class="sC-text">
+          <div class="sC-main">35-49岁 · 事业巅峰</div>
+          <div class="sC-sub">企业管理者、内容创作者、科技从业、商务人士</div>
+        </div>
+        <div class="sC-arrow">›</div>
+      </div>
+      <div class="sC-row">
+        <div class="sC-icon">🍵</div>
+        <div class="sC-text">
+          <div class="sC-main">50-60岁 · 悠然人生</div>
+          <div class="sC-sub">企业主/投资人、专业技术人员、都市中老年</div>
+        </div>
+        <div class="sC-arrow">›</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ==================== 方案D：水墨画轴（推荐） ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-badge rec">⭐ 推荐</span>
+    <span class="scheme-title">水墨画轴风</span>
+  </div>
+  <p class="scheme-desc">配合中式美术风格，用古文"少年/弱冠/而立/不惑/知天命"做主标题，画轴/卷轴设计语言。风格最统一，辨识度最高。</p>
+  <div class="phone">
+    <div class="ink-bg"></div>
+    <div class="top-bar">
+      <div class="bar-chip gold"><span class="icon">💰</span> 1280</div>
+      <div class="bar-chip stamina"><span class="icon">⚡</span> x4</div>
+      <div class="bar-chip elite"><span class="icon">💀</span> 12/20</div>
+    </div>
+    <div class="equip-btn">🎒 装备</div>
+    <div class="title-area">
+      <div class="main-title">迎接挑战</div>
+      <div class="sub-title">选择你的人生篇章</div>
+    </div>
+    <div class="sD-buttons">
+      <div class="sD-scroll">
+        <div class="sD-name">少年</div>
+        <div class="sD-age">12 — 17 岁</div>
+        <div class="sD-line"></div>
+        <div class="sD-ids">初中生<br>高中生</div>
+      </div>
+      <div class="sD-scroll">
+        <div class="sD-name">弱冠</div>
+        <div class="sD-age">18 — 24 岁</div>
+        <div class="sD-line"></div>
+        <div class="sD-ids">大学生<br>研究生<br>基层职员</div>
+      </div>
+      <div class="sD-scroll">
+        <div class="sD-name">而立</div>
+        <div class="sD-age">25 — 34 岁</div>
+        <div class="sD-line"></div>
+        <div class="sD-ids">企业白领<br>创意工作者<br>职场女性<br>高端服务业</div>
+      </div>
+      <div class="sD-scroll">
+        <div class="sD-name">不惑</div>
+        <div class="sD-age">35 — 49 岁</div>
+        <div class="sD-line"></div>
+        <div class="sD-ids">企业管理者<br>内容创作者<br>科技从业<br>商务人士</div>
+      </div>
+      <div class="sD-scroll">
+        <div class="sD-name">知天命</div>
+        <div class="sD-age">50 — 60 岁</div>
+        <div class="sD-line"></div>
+        <div class="sD-ids">企业主/投资人<br>专业技术人员<br>都市中老年</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ==================== 方案E：Emoji 卡片 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-badge">方案E</span>
+    <span class="scheme-title">Emoji 卡片式</span>
+  </div>
+  <p class="scheme-desc">在方案 A 基础上加入大 Emoji 图标，视觉更活泼。适合偏轻松的游戏风格。</p>
+  <div class="phone">
+    <div class="ink-bg"></div>
+    <div class="top-bar">
+      <div class="bar-chip gold"><span class="icon">💰</span> 1280</div>
+      <div class="bar-chip stamina"><span class="icon">⚡</span> x4</div>
+      <div class="bar-chip elite"><span class="icon">💀</span> 12/20</div>
+    </div>
+    <div class="equip-btn">🎒 装备</div>
+    <div class="title-area">
+      <div class="main-title">迎接挑战</div>
+      <div class="sub-title">选择你的人生</div>
+    </div>
+    <div class="sE-buttons">
+      <div class="sE-card">
+        <div class="sE-emoji">🎒</div>
+        <div class="sE-age">12-17</div>
+        <div class="sE-theme">学生时代</div>
+        <div class="sE-ids">初中生 · 高中生</div>
+      </div>
+      <div class="sE-card">
+        <div class="sE-emoji">🎓</div>
+        <div class="sE-age">18-24</div>
+        <div class="sE-theme">青春年华</div>
+        <div class="sE-ids">大学生 · 研究生 · 基层职员</div>
+      </div>
+      <div class="sE-card">
+        <div class="sE-emoji">💼</div>
+        <div class="sE-age">25-34</div>
+        <div class="sE-theme">职场精英</div>
+        <div class="sE-ids">白领 · 创意 · 职场女性 · 高端服务</div>
+      </div>
+      <div class="sE-card">
+        <div class="sE-emoji">👔</div>
+        <div class="sE-age">35-49</div>
+        <div class="sE-theme">事业巅峰</div>
+        <div class="sE-ids">管理者 · 内容创作者 · 科技 · 商务</div>
+      </div>
+      <div class="sE-card">
+        <div class="sE-emoji">🍵</div>
+        <div class="sE-age">50-60</div>
+        <div class="sE-theme">悠然人生</div>
+        <div class="sE-ids">企业主 · 专家 · 都市长者</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ==================== 副本深度选择条优化 ==================== -->
+<div class="depth-section">
+  <div class="depth-title">🗺️ 副本深度选择条 · 优化方案</div>
+  <div class="depth-sub">在已解锁层后面显示锁定的下一层 + 距离解锁还需击杀的精英怪数量</div>
+
+  <div class="phone" style="height: 180px; border-radius: 16px;">
+    <div class="ink-bg"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:960px;z-index:10;">
+      <div style="margin-bottom:8px;">
+        <span style="font-size:14px;color:#e8c84a;font-weight:600;">副本深度 · 选择学期进度</span>
+      </div>
+      <div class="depth-strip">
+        <div class="depth-chip active">
+          <div class="num">1</div>
+          <div class="label">初一上</div>
+        </div>
+        <div class="depth-chip">
+          <div class="num">2</div>
+          <div class="label">初一下</div>
+        </div>
+        <div class="depth-chip">
+          <div class="num">3</div>
+          <div class="label">初二上</div>
+        </div>
+        <div class="depth-chip locked">
+          <div class="lock-icon">🔒</div>
+          <div class="num">4</div>
+          <div class="label">初二下</div>
+          <div class="remain">还差 8 只精英怪</div>
+        </div>
+        <div class="depth-chip locked" style="opacity:0.3;">
+          <div class="lock-icon">🔒</div>
+          <div class="num">5</div>
+          <div class="label">初三上</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ==================== HUD 精英进度 ==================== -->
+<div class="hud-section">
+  <div class="hud-title">📊 游戏 HUD · 新增精英怪进度</div>
+  <div class="hud-sub">在战斗界面 HUD 中新增精英怪击杀进度显示</div>
+
+  <div class="hud-panel">
+    <div class="hud-row">
+      <div class="hud-item gold"><span class="icon">💰</span> 1280</div>
+      <div class="hud-item stamina"><span class="icon">⚡</span> x4</div>
+      <div class="hud-item elite"><span class="icon">💀</span> 12/20</div>
+      <div style="flex:1"></div>
+      <div class="hud-kills">
+        击杀 <span>45</span> · 学科 <span>8</span> · <span class="highlight">深度 12/20</span>
+      </div>
+    </div>
+    <div class="hud-stat-row">
+      <div class="hud-stat-label">生命</div>
+      <div class="hud-bar-track">
+        <div class="hud-bar-fill hp" style="width: 68%"></div>
+      </div>
+      <div class="hud-stat-val">7 / 10</div>
+    </div>
+    <div class="hud-stat-row">
+      <div class="hud-stat-label">攻击</div>
+      <div class="hud-bar-track">
+        <div class="hud-bar-fill atk" style="width: 20%"></div>
+      </div>
+      <div class="hud-stat-val">1 / 50</div>
+    </div>
+    <div class="hud-stat-row">
+      <div class="hud-stat-label">防御</div>
+      <div class="hud-bar-track">
+        <div class="hud-bar-fill def" style="width: 0%"></div>
+      </div>
+      <div class="hud-stat-val">0.0 / 50</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
