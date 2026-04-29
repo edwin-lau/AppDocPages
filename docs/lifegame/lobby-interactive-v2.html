@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Life Game · 大厅 v2</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.92);
+      background:
+        radial-gradient(ellipse 100% 70% at 50% 15%, rgba(130, 200, 150, 0.4), transparent 50%),
+        radial-gradient(ellipse 80% 50% at 20% 80%, rgba(80, 120, 90, 0.25), transparent 45%),
+        radial-gradient(ellipse 70% 45% at 85% 70%, rgba(60, 100, 80, 0.2), transparent 40%),
+        linear-gradient(168deg, #0c1f14 0%, #163824 22%, #2a5238 50%, #3d6b4a 72%, #5a9270 92%, #7ab892 100%);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .lobby {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      max-height: 100vh;
+      max-height: 100dvh;
+      width: 100%;
+      max-width: 100vw;
+      overflow: hidden;
+    }
+
+    /* —— 顶栏 —— */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      padding: clamp(4px, 1vh, 8px) 10px;
+      gap: 6px;
+    }
+
+    .top-stats {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      font-size: clamp(12px, 2.8vw, 14px);
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
+    .top-stats span { white-space: nowrap; }
+
+    .btn-equip {
+      flex-shrink: 0;
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #dcc480;
+      background: rgba(15, 30, 22, 0.55);
+      border: 1px solid #dcc480;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-equip:active {
+      transform: scale(0.96);
+      background: rgba(15, 30, 22, 0.75);
+    }
+
+    /* —— 主区：三行紧凑，横屏一屏 —— */
+    .main-stack {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(3px, 0.6vh, 6px);
+      padding: 2px 6px 6px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .row {
+      width: 100%;
+      max-width: min(960px, 100%);
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .age-row {
+      gap: clamp(3px, 1.2vw, 8px);
+      flex-wrap: nowrap;
+    }
+
+    /* 画轴卡片（年龄）— 参考 lobby-interactive.html */
+    .scroll-card {
+      position: relative;
+      background: rgba(12, 28, 20, 0.78);
+      border: 2px solid #dcc480;
+      border-radius: 8px;
+      padding: clamp(6px, 1.5vw, 10px) clamp(4px, 1vw, 8px) clamp(8px, 2vw, 12px);
+      cursor: pointer;
+      transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        opacity 0.25s ease,
+        transform 0.15s ease;
+      -webkit-user-select: none;
+      user-select: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      min-width: 0;
+      flex: 1 1 0;
+      max-width: 18%;
+      min-height: 0;
+      height: clamp(68px, 16vh, 104px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .scroll-card::before,
+    .scroll-card::after {
+      content: "";
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #dcc480 20%, #dcc480 80%, transparent);
+      pointer-events: none;
+    }
+
+    .scroll-card::before { top: 4px; }
+    .scroll-card::after { bottom: 4px; }
+
+    .scroll-card__title {
+      font-size: clamp(12px, 3.2vw, 15px);
+      font-weight: 700;
+      color: #dcc480;
+      line-height: 1.2;
+    }
+
+    .scroll-card__age {
+      margin-top: 3px;
+      font-size: clamp(12px, 2.6vw, 12px);
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .scroll-card:active:not(.scroll-card--dimmed) {
+      transform: scale(0.97);
+    }
+
+    .scroll-card--selected {
+      border-color: #f5e6a5;
+      box-shadow:
+        0 0 0 2px rgba(245, 230, 165, 0.45),
+        0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .scroll-card--selected::before,
+    .scroll-card--selected::after {
+      background: linear-gradient(90deg, transparent, #f5e6a5 15%, #f5e6a5 85%, transparent);
+    }
+
+    .scroll-card--dimmed {
+      opacity: 0.48;
+    }
+
+    /* 更小画轴：身份（仅 emoji + 名称） */
+    .identity-row {
+      flex-wrap: wrap;
+      gap: clamp(4px, 1vw, 8px);
+      min-height: 0;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition:
+        max-height 0.32s ease,
+        opacity 0.28s ease,
+        transform 0.28s ease,
+        margin 0.28s ease;
+      margin-top: 0;
+    }
+
+    .identity-row--visible {
+      max-height: min(26vh, 220px);
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+      margin-top: 1px;
+    }
+
+    .scroll-card--id {
+      flex: 0 1 auto;
+      max-width: none;
+      width: auto;
+      min-width: min(72px, 18vw);
+      height: auto;
+      min-height: 52px;
+      max-height: 76px;
+      aspect-ratio: auto;
+      padding: 7px 10px 9px;
+      border-radius: 7px;
+      border-width: 1.5px;
+    }
+
+    .scroll-card--id::before,
+    .scroll-card--id::after {
+      left: 10%;
+      right: 10%;
+      height: 1px;
+    }
+
+    .scroll-card--id::before { top: 4px; }
+    .scroll-card--id::after { bottom: 4px; }
+
+    .scroll-card__emoji {
+      font-size: clamp(12px, 3.2vw, 17px);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .scroll-card__idname {
+      font-size: 12px;
+      font-weight: 700;
+      color: #dcc480;
+      line-height: 1.15;
+      text-align: center;
+      word-break: keep-all;
+    }
+
+    /* 副本芯片行 */
+    .copy-row {
+      width: 100%;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transform: translateY(-3px);
+      transition:
+        max-height 0.28s ease,
+        opacity 0.26s ease,
+        transform 0.26s ease,
+        margin 0.26s ease;
+      margin-top: 0;
+    }
+
+    .copy-row--visible {
+      max-height: 56px;
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+      margin-top: 1px;
+    }
+
+    .copy-scroll {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 2px 0;
+      min-height: 30px;
+    }
+
+    .copy-scroll::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex: 0 0 auto;
+      min-width: 0;
+      padding: 3px 7px;
+      min-height: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      font-size: 12px;
+      line-height: 1.15;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid rgba(220, 196, 128, 0.55);
+      background: rgba(15, 35, 25, 0.75);
+      color: rgba(255, 255, 255, 0.88);
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease, opacity 0.2s ease;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .chip:active:not(.chip--locked) {
+      transform: scale(0.95);
+    }
+
+    .chip--ok {
+      border-color: rgba(120, 200, 140, 0.7);
+    }
+
+    .chip--selected {
+      border-color: #f5e6a5;
+      background: rgba(50, 80, 55, 0.95);
+      box-shadow: 0 0 0 1px rgba(245, 230, 165, 0.35);
+    }
+
+    .chip--locked {
+      opacity: 0.72;
+      cursor: not-allowed;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .chip__main {
+      font-size: 12px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(16px);
+      max-width: min(92%, 420px);
+      padding: 10px 14px;
+      font-size: 12px;
+      line-height: 1.4;
+      text-align: center;
+      color: #1a2518;
+      background: rgba(245, 230, 165, 0.96);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
+      z-index: 9999;
+      font-weight: 600;
+    }
+
+    .toast--show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="lobby" id="lobby">
+    <header class="top-bar">
+      <div class="top-stats" aria-label="资源">
+        <span>💰1280</span>
+        <span>⚡x4</span>
+        <span>💀12/20</span>
+      </div>
+      <button type="button" class="btn-equip" id="btnEquip" aria-label="装备">装备</button>
+    </header>
+
+    <div class="main-stack">
+      <div class="row age-row" id="ageRow" role="list"></div>
+      <div class="row identity-row" id="identityRow" aria-live="polite"></div>
+      <div class="copy-row" id="copyRowWrap">
+        <div class="copy-scroll" id="copyRow" role="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+(function () {
+  var AGE_DATA = [
+    {
+      key: "shaonian",
+      title: "少年",
+      age: "12-17岁",
+      identities: [
+        { emoji: "📖", name: "初中生" },
+        { emoji: "📚", name: "高中生" }
+      ]
+    },
+    {
+      key: "ruoguan",
+      title: "弱冠",
+      age: "18-24岁",
+      identities: [
+        { emoji: "🎓", name: "大学生" },
+        { emoji: "🔬", name: "研究生" },
+        { emoji: "💼", name: "基层职员" }
+      ]
+    },
+    {
+      key: "erli",
+      title: "而立",
+      age: "25-34岁",
+      identities: [
+        { emoji: "🏢", name: "企业白领" },
+        { emoji: "🎨", name: "创意工作者" },
+        { emoji: "👩‍💼", name: "职场女性" },
+        { emoji: "💎", name: "高端服务业" }
+      ]
+    },
+    {
+      key: "buhuo",
+      title: "不惑",
+      age: "35-49岁",
+      identities: [
+        { emoji: "👔", name: "企业管理者" },
+        { emoji: "🎬", name: "内容创作者" },
+        { emoji: "💻", name: "科技从业" },
+        { emoji: "🤝", name: "商务人士" }
+      ]
+    },
+    {
+      key: "zhitianming",
+      title: "知天命",
+      age: "50-60岁",
+      identities: [
+        { emoji: "🏦", name: "企业主/投资人" },
+        { emoji: "🔬", name: "专业技术人员" },
+        { emoji: "🍵", name: "都市中老年" }
+      ]
+    }
+  ];
+
+  function buildChuzhongCopies() {
+    return [
+      { id: "c1", chip: "1初一上", toast: "初一上", done: true, unlocked: true, eliteGap: 0 },
+      { id: "c2", chip: "2初一下", toast: "初一下", done: false, unlocked: true, eliteGap: 0 },
+      { id: "c3", chip: "3初二上", toast: "初二上", done: false, unlocked: true, eliteGap: 0 },
+      { id: "c4", chip: "4初二下", toast: "初二下", done: false, unlocked: false, eliteGap: 8 },
+      { id: "c5", chip: "5初三上", toast: "初三上", done: false, unlocked: false, eliteGap: 12 },
+      { id: "c6", chip: "6初三下", toast: "初三下", done: false, unlocked: false, eliteGap: 16 }
+    ];
+  }
+
+  function buildGaozhongCopies() {
+    return [
+      { id: "g7", chip: "7高一上", toast: "高一上", done: false, unlocked: true, eliteGap: 0 },
+      { id: "g8", chip: "8高一下", toast: "高一下", done: false, unlocked: true, eliteGap: 0 },
+      { id: "g9", chip: "9高二上", toast: "高二上", done: false, unlocked: false, eliteGap: 4 },
+      { id: "g10", chip: "10高二下", toast: "高二下", done: false, unlocked: false, eliteGap: 7 },
+      { id: "g11", chip: "11高三上", toast: "高三上", done: false, unlocked: false, eliteGap: 10 },
+      { id: "g12", chip: "12高三下", toast: "高三下", done: false, unlocked: false, eliteGap: 14 }
+    ];
+  }
+
+  /** 其他身份：1–12 全部显示；未解锁 🔒 + 还差 X 只 */
+  function buildGenericCopies() {
+    var out = [];
+    for (var i = 1; i <= 12; i++) {
+      var unlocked = i <= 2;
+      out.push({
+        id: "p" + i,
+        chip: String(i),
+        toast: "阶段" + i,
+        done: i === 1,
+        unlocked: unlocked,
+        eliteGap: unlocked ? 0 : Math.min(4 + i * 2, 18)
+      });
+    }
+    return out;
+  }
+
+  function copyTypeForIdentity(name) {
+    if (name === "初中生") return "chuzhong";
+    if (name === "高中生") return "gaozhong";
+    return "generic";
+  }
+
+  function getCopiesFor(name) {
+    var t = copyTypeForIdentity(name);
+    if (t === "chuzhong") return buildChuzhongCopies();
+    if (t === "gaozhong") return buildGaozhongCopies();
+    return buildGenericCopies();
+  }
+
+  var ageRow = document.getElementById("ageRow");
+  var identityRow = document.getElementById("identityRow");
+  var copyRowWrap = document.getElementById("copyRowWrap");
+  var copyRow = document.getElementById("copyRow");
+  var toastEl = document.getElementById("toast");
+  var toastTimer = null;
+
+  var selectedAgeIndex = null;
+  var selectedIdentity = null;
+  var selectedCopyId = null;
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("toast--show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove("toast--show");
+    }, 2400);
+  }
+
+  function updateAgeRow() {
+    var cards = ageRow.querySelectorAll(".scroll-card");
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      c.classList.remove("scroll-card--selected", "scroll-card--dimmed");
+      if (selectedAgeIndex === null) continue;
+      if (i === selectedAgeIndex) c.classList.add("scroll-card--selected");
+      else c.classList.add("scroll-card--dimmed");
+    }
+  }
+
+  function clearIdentityAndCopy() {
+    selectedIdentity = null;
+    selectedCopyId = null;
+    identityRow.classList.remove("identity-row--visible");
+    identityRow.innerHTML = "";
+    copyRowWrap.classList.remove("copy-row--visible");
+    copyRow.innerHTML = "";
+  }
+
+  function renderIdentities() {
+    identityRow.innerHTML = "";
+    if (selectedAgeIndex === null) {
+      identityRow.classList.remove("identity-row--visible");
+      copyRowWrap.classList.remove("copy-row--visible");
+      copyRow.innerHTML = "";
+      return;
+    }
+    var data = AGE_DATA[selectedAgeIndex];
+    data.identities.forEach(function (id) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "scroll-card scroll-card--id";
+      btn.dataset.name = id.name;
+      btn.innerHTML =
+        '<span class="scroll-card__emoji">' + id.emoji + "</span>" +
+        '<span class="scroll-card__idname">' + id.name + "</span>";
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        onIdentityClick(id);
+      });
+      identityRow.appendChild(btn);
+    });
+    identityRow.classList.add("identity-row--visible");
+    updateIdentityVisuals();
+  }
+
+  function updateIdentityVisuals() {
+    var btns = identityRow.querySelectorAll(".scroll-card--id");
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      b.classList.remove("scroll-card--selected", "scroll-card--dimmed");
+      if (!selectedIdentity) continue;
+      if (b.dataset.name === selectedIdentity.name) b.classList.add("scroll-card--selected");
+      else b.classList.add("scroll-card--dimmed");
+    }
+  }
+
+  function renderCopies() {
+    copyRow.innerHTML = "";
+    if (!selectedIdentity) {
+      copyRowWrap.classList.remove("copy-row--visible");
+      return;
+    }
+    var list = getCopiesFor(selectedIdentity.name);
+
+    list.forEach(function (item) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.dataset.id = item.id;
+      if (item.done && item.unlocked) chip.classList.add("chip--ok");
+
+      var line1 = document.createElement("span");
+      line1.className = "chip__main";
+      if (item.unlocked) {
+        line1.textContent = item.chip + (item.done ? " ✅" : "");
+      } else {
+        line1.textContent = item.chip + " 🔒还差" + item.eliteGap + "只";
+      }
+
+      chip.appendChild(line1);
+
+      if (!item.unlocked) chip.classList.add("chip--locked");
+      if (selectedCopyId === item.id) chip.classList.add("chip--selected");
+
+      chip.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (!item.unlocked) {
+          showToast("未解锁 · 🔒还差" + item.eliteGap + "只");
+          return;
+        }
+        selectedCopyId = item.id;
+        updateCopySelection();
+        showToast("已选择 " + selectedIdentity.name + " · " + item.toast + "，准备进入游戏");
+      });
+
+      copyRow.appendChild(chip);
+    });
+    copyRowWrap.classList.add("copy-row--visible");
+  }
+
+  function updateCopySelection() {
+    var chips = copyRow.querySelectorAll(".chip");
+    for (var i = 0; i < chips.length; i++) {
+      var ch = chips[i];
+      ch.classList.remove("chip--selected");
+      if (selectedCopyId && ch.dataset.id === selectedCopyId) ch.classList.add("chip--selected");
+    }
+  }
+
+  function onIdentityClick(id) {
+    if (selectedIdentity && selectedIdentity.name === id.name) {
+      selectedIdentity = null;
+      selectedCopyId = null;
+      updateIdentityVisuals();
+      copyRowWrap.classList.remove("copy-row--visible");
+      copyRow.innerHTML = "";
+      return;
+    }
+    selectedIdentity = id;
+    selectedCopyId = null;
+    updateIdentityVisuals();
+    renderCopies();
+  }
+
+  function onAgeClick(index) {
+    if (selectedAgeIndex === index) {
+      selectedAgeIndex = null;
+      clearIdentityAndCopy();
+      updateAgeRow();
+      return;
+    }
+    selectedAgeIndex = index;
+    selectedIdentity = null;
+    selectedCopyId = null;
+    updateAgeRow();
+    renderIdentities();
+    copyRowWrap.classList.remove("copy-row--visible");
+    copyRow.innerHTML = "";
+  }
+
+  function renderAgeCards() {
+    ageRow.innerHTML = "";
+    AGE_DATA.forEach(function (item, index) {
+      var el = document.createElement("button");
+      el.type = "button";
+      el.className = "scroll-card";
+      el.setAttribute("role", "listitem");
+      el.innerHTML =
+        '<span class="scroll-card__title">' + item.title + "</span>" +
+        '<span class="scroll-card__age">' + item.age + "</span>";
+      el.addEventListener("click", function () {
+        onAgeClick(index);
+      });
+      ageRow.appendChild(el);
+    });
+    updateAgeRow();
+  }
+
+  document.getElementById("btnEquip").addEventListener("click", function () {
+    showToast("装备（原型）");
+  });
+
+  renderAgeCards();
+})();
+  </script>
+</body>
+</html>
