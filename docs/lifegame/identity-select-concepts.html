@@ -1,667 +1,760 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-Hans">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
-<title>Life Game · 大厅交互方案</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+  <title>Life Game · 身份选择交互方案</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
-  background: #0e0e1a;
-  color: #fff;
-  font-family: -apple-system, "PingFang SC", "Noto Sans SC", sans-serif;
-  padding: 12px;
-  -webkit-text-size-adjust: 100%;
-}
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
 
-/* 全宽场景卡片 - 模拟真实游戏横屏 */
-.scene {
-  width: 100%;
-  min-height: 56vw; /* 横屏比例 */
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.4);
-}
+    body {
+      background: #0a0f0a;
+      color: #fff;
+      font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+      padding: 14px 12px 28px;
+      line-height: 1.45;
+    }
 
-.bg {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(180deg,
-    #4a6a4a 0%, #3d5d3d 20%, #2d4a2d 50%, #1a301a 80%, #122512 100%);
-}
+    /* 章节说明：大字便于老板在手机上一眼看清 */
+    .doc-title {
+      font-size: clamp(22px, 5.5vw, 28px);
+      font-weight: 700;
+      color: #e8c84a;
+      text-align: center;
+      margin-bottom: 6px;
+      letter-spacing: 0.06em;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
 
-.bg::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 100%),
-    radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,0.2) 100%);
-}
+    .doc-sub {
+      font-size: clamp(14px, 3.8vw, 17px);
+      color: rgba(255,255,255,0.72);
+      text-align: center;
+      margin-bottom: 18px;
+      padding: 0 4px;
+    }
 
-/* 标题区 */
-.hdr {
-  position: relative;
-  z-index: 5;
-  text-align: center;
-  padding: 10px 0 4px;
-}
+    .section {
+      margin-top: 26px;
+      margin-bottom: 10px;
+    }
 
-.hdr h1 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #dcc480;
-  text-shadow: 0 0 8px rgba(220,196,128,0.15), 1px 1px 3px rgba(0,0,0,0.4);
-  letter-spacing: 2px;
-}
+    .section-label {
+      font-size: clamp(16px, 4.2vw, 20px);
+      font-weight: 700;
+      color: #dcc480;
+      margin-bottom: 4px;
+    }
 
-.hdr p {
-  font-size: 12px;
-  color: rgba(255,255,255,0.5);
-  margin-top: 2px;
-}
+    .section-desc {
+      font-size: clamp(13px, 3.5vw, 15px);
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 12px;
+      padding-right: 4px;
+    }
 
-/* 顶栏 */
-.bar {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  gap: 6px;
-  padding: 6px 10px;
-  flex-wrap: wrap;
-}
+    /* 全宽横屏比例场景：宽大于高 */
+    .scene {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 200px;
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+    }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: rgba(12,12,25,0.7);
-  border: 1px solid rgba(220,196,128,0.15);
-  border-radius: 6px;
-  padding: 3px 7px;
-  font-size: 11px;
-  font-weight: 600;
-}
+    .bg-mount {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(165deg,
+        #5a8a62 0%,
+        #3d6b48 22%,
+        #2d5238 48%,
+        #1a3528 72%,
+        #0f2218 100%);
+    }
 
-.c-gold { color: #e8c84a; }
-.c-blue { color: #72c8f0; }
-.c-purple { color: #c77dff; }
+    .bg-mount::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 120% 60% at 50% 100%, rgba(0,0,0,0.35) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 40%);
+      mix-blend-mode: soft-light;
+    }
 
-.bar-r { margin-left: auto; }
+    .scene-inner {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 8px 10px 10px;
+      min-height: 0;
+    }
 
-/* 画轴卡片容器 */
-.cards {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  gap: 6px;
-  padding: 0 10px;
-  justify-content: center;
-}
+    /* 顶栏 */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
 
-/* 画轴卡片 */
-.card {
-  flex: 1;
-  max-width: 120px;
-  background: rgba(12,12,25,0.7);
-  border: 1px solid rgba(200,170,100,0.25);
-  border-radius: 5px;
-  padding: 10px 6px 8px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s;
-}
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(8, 14, 10, 0.72);
+      border: 1px solid rgba(220, 196, 128, 0.35);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: clamp(12px, 3.2vw, 14px);
+      font-weight: 600;
+      color: #e8c84a;
+    }
 
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 15%; right: 15%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(200,170,100,0.4), transparent);
-}
+    .stat-pill .icon { font-size: 1.1em; }
 
-.card::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 15%; right: 15%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(200,170,100,0.4), transparent);
-}
+    .stat-pill.alt { color: #7ec8e8; }
 
-.card:active { transform: scale(0.97); }
+    .stat-pill.elite {
+      margin-left: auto;
+      color: #dcc480;
+      font-variant-numeric: tabular-nums;
+    }
 
-.c-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #dcc480;
-  letter-spacing: 2px;
-}
+    /* 画轴装饰线 */
+    .scroll-gold-line {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #dcc480, #e8c84a, #dcc480, transparent);
+      border-radius: 2px;
+      opacity: 0.9;
+    }
 
-.c-age {
-  font-size: 8px;
-  color: rgba(220,196,128,0.35);
-  margin-top: 1px;
-}
+    /* 年龄条：横向滑动 */
+    .age-rail-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+    }
 
-.c-line {
-  width: 24px;
-  height: 1px;
-  background: rgba(200,170,100,0.2);
-  margin: 5px auto 4px;
-}
+    .age-rail {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 6px 2px 10px;
+      width: 100%;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x proximity;
+    }
 
-.c-ids {
-  font-size: 8px;
-  color: rgba(255,255,255,0.3);
-  line-height: 1.6;
-}
+    .age-rail::-webkit-scrollbar { height: 4px; }
+    .age-rail::-webkit-scrollbar-thumb {
+      background: rgba(220, 196, 128, 0.35);
+      border-radius: 4px;
+    }
 
-/* 身份卡片 - 画轴风（方案A） */
-.id-card {
-  flex: 1;
-  max-width: 140px;
-  background: rgba(12,12,25,0.7);
-  border: 1px solid rgba(200,170,100,0.25);
-  border-radius: 5px;
-  padding: 10px 8px 8px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s;
-}
+    /* 画轴卡片（年龄 / 方案A） */
+    .scroll-card {
+      flex: 0 0 auto;
+      width: min(32vw, 140px);
+      min-width: 118px;
+      background: rgba(6, 12, 8, 0.78);
+      border: 1px solid rgba(220, 196, 128, 0.45);
+      border-radius: 10px;
+      padding: 10px 8px 10px;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
 
-.id-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 15%; right: 15%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(200,170,100,0.4), transparent);
-}
+    .scroll-card .line-top,
+    .scroll-card .line-bot {
+      flex-shrink: 0;
+    }
 
-.id-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 15%; right: 15%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(200,170,100,0.4), transparent);
-}
+    .scroll-card .line-bot { margin-top: auto; }
 
-.id-card:active { transform: scale(0.97); }
+    .title-classic {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e8c84a;
+      text-align: center;
+      letter-spacing: 0.12em;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
 
-.id-icon { font-size: 24px; margin-bottom: 4px; }
+    /* 飞书浏览器：正文小字不低于 12px（原稿 8px 已上调以保证可读） */
+    .age-num {
+      font-size: 12px;
+      color: #b89a4a;
+      text-align: center;
+      font-weight: 600;
+    }
 
-.id-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: #dcc480;
-  letter-spacing: 1px;
-}
+    .divider-faint {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(220,196,128,0.35), transparent);
+      margin: 2px 0;
+    }
 
-.id-line {
-  width: 24px;
-  height: 1px;
-  background: rgba(200,170,100,0.2);
-  margin: 4px auto;
-}
+    .role-lines {
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      text-align: center;
+      line-height: 1.35;
+    }
 
-.id-desc {
-  font-size: 8.5px;
-  color: rgba(255,255,255,0.3);
-  line-height: 1.5;
-}
+    .emoji-big {
+      font-size: 26px;
+      text-align: center;
+      line-height: 1;
+    }
 
-/* 横条列表（方案B） */
-.list {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 0 16px;
-}
+    .id-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.75);
+      text-align: center;
+      line-height: 1.3;
+    }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(12,12,25,0.6);
-  border: 1px solid rgba(200,170,100,0.15);
-  border-radius: 7px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
+    /* 方案A：身份画轴 — 可稍宽 */
+    .scene-a .scroll-card {
+      width: min(42vw, 168px);
+      min-width: 130px;
+    }
 
-.row:active { background: rgba(200,170,100,0.06); }
+    .identity-rail {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+    }
 
-.row-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: rgba(200,170,100,0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-}
+    .identity-rail .age-rail {
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
 
-.row-text { flex: 1; }
-.row-name { font-size: 12px; font-weight: 600; color: #dcc480; }
-.row-desc { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 1px; }
-.row-arrow { font-size: 13px; color: rgba(200,170,100,0.25); }
+    /* 方案B：横条列表 */
+    .list-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      margin-top: 10px;
+      padding-right: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
 
-/* 圆形（方案C） */
-.orbs {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  gap: 8px;
-  padding: 0 16px;
-  justify-content: center;
-}
+    .row-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(6, 12, 8, 0.72);
+      border: 1px solid rgba(220, 196, 128, 0.35);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
 
-.orb {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  flex: 1;
-  max-width: 100px;
-  transition: transform 0.2s;
-}
+    .row-ico {
+      width: clamp(40px, 11vw, 48px);
+      height: clamp(40px, 11vw, 48px);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(220, 196, 128, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(22px, 6vw, 28px);
+      flex-shrink: 0;
+    }
 
-.orb:active { transform: scale(0.95); }
+    .row-mid {
+      flex: 1;
+      min-width: 0;
+    }
 
-.orb-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 2px solid rgba(200,170,100,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  background: radial-gradient(circle at 40% 35%, rgba(35,35,60,0.9), rgba(15,15,30,0.95));
-  margin-bottom: 5px;
-}
+    .row-name {
+      font-size: clamp(14px, 3.8vw, 16px);
+      font-weight: 700;
+      color: #e8c84a;
+      margin-bottom: 2px;
+    }
 
-.orb-name { font-size: 11px; font-weight: 700; color: #dcc480; }
-.orb-desc { font-size: 8px; color: rgba(255,255,255,0.3); margin-top: 1px; }
+    .row-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.3;
+    }
 
-/* 返回 */
-.back {
-  position: relative;
-  z-index: 5;
-  text-align: center;
-  padding: 6px 0 8px;
-}
+    .row-arrow {
+      font-size: clamp(18px, 5vw, 22px);
+      color: #dcc480;
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
 
-.back span {
-  font-size: 10px;
-  color: rgba(220,196,128,0.45);
-}
+    /* 方案C：圆形角色 */
+    .moba-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(6px, 2vw, 12px);
+      margin-top: 8px;
+      padding: 4px 0;
+      flex-wrap: wrap;
+    }
 
-/* 深度条 */
-.depths {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  gap: 4px;
-  padding: 0 16px;
-  justify-content: center;
-}
+    .moba-hero {
+      flex: 1 1 40%;
+      max-width: 48%;
+      min-width: 118px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+    }
 
-.dp {
-  min-width: 48px;
-  background: rgba(12,12,25,0.65);
-  border: 1px solid rgba(200,170,100,0.18);
-  border-radius: 5px;
-  padding: 4px 6px;
-  text-align: center;
-}
+    .moba-ring {
+      width: min(26vw, 92px);
+      height: min(26vw, 92px);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(232,200,74,0.25), rgba(6,12,8,0.92));
+      border: 2px solid rgba(220, 196, 128, 0.55);
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.2), inset 0 0 20px rgba(0,0,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(30px, 9vw, 40px);
+    }
 
-.dp.on { background: rgba(220,196,128,0.08); border-color: rgba(220,196,128,0.5); }
-.dp .n { font-size: 11px; font-weight: 700; color: #dcc480; }
-.dp .l { font-size: 7px; color: rgba(255,255,255,0.35); margin-top: 1px; }
-.dp.off { opacity: 0.35; }
-.dp.off .n { color: rgba(255,255,255,0.2); }
-.dp.off .r { font-size: 6.5px; color: rgba(199,125,255,0.5); margin-top: 2px; }
+    .moba-name {
+      font-size: clamp(13px, 3.5vw, 15px);
+      font-weight: 700;
+      color: #e8c84a;
+    }
 
-/* 分割标签 */
-.label {
-  text-align: center;
-  padding: 14px 0 6px;
-}
+    .moba-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.25;
+      padding: 0 4px;
+    }
 
-.label h2 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #dcc480;
-}
+    /* 底部：知天命三种方案对比 */
+    .compare-scene {
+      width: 100%;
+      aspect-ratio: 16 / 11;
+      min-height: 240px;
+    }
 
-.label p {
-  font-size: 11px;
-  color: rgba(255,255,255,0.35);
-  margin-top: 2px;
-}
+    .compare-grid {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 8px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
 
-.sep {
-  border: none;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(220,196,128,0.1), transparent);
-  margin: 10px 0;
-}
+    @media (min-width: 480px) {
+      .compare-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
 
-/* 高亮选中 */
-.hi {
-  border-color: rgba(220,196,128,0.55) !important;
-  background: rgba(12,12,25,0.85) !important;
-  box-shadow: 0 3px 10px rgba(220,196,128,0.1);
-}
+    .compare-col {
+      background: rgba(6, 12, 8, 0.55);
+      border: 1px solid rgba(220, 196, 128, 0.28);
+      border-radius: 12px;
+      padding: 8px 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
 
-.dim {
-  opacity: 0.18;
-  pointer-events: none;
-}
-</style>
+    .compare-col h4 {
+      font-size: clamp(13px, 3.4vw, 15px);
+      color: #dcc480;
+      text-align: center;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(220,196,128,0.2);
+      padding-bottom: 6px;
+    }
+
+    .mini-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mini-scroll .scroll-card {
+      width: 100%;
+      min-width: 0;
+      padding: 8px 6px;
+    }
+
+    .mini-list .row-item {
+      padding: 8px 10px;
+      margin-bottom: 6px;
+    }
+
+    .mini-list .row-item:last-child { margin-bottom: 0; }
+
+    .mini-moba {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .mini-moba .moba-hero {
+      max-width: 100%;
+      flex-direction: row;
+      text-align: left;
+      gap: 10px;
+    }
+
+    .mini-moba .moba-ring {
+      width: 44px;
+      height: 44px;
+      font-size: 24px;
+    }
+
+    .mini-moba .moba-text { flex: 1; min-width: 0; }
+    .mini-moba .moba-name { font-size: 13px; }
+    .mini-moba .moba-desc { font-size: 12px; padding: 0; }
+
+    .hint-feishu {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      text-align: center;
+      margin-top: 20px;
+      padding: 0 8px;
+    }
+  </style>
 </head>
 <body>
 
-<!-- ===== 年龄选择（优化字体） ===== -->
-<div class="label">
-  <h2>📌 年龄选择 · 字体优化版</h2>
-  <p>文字缩小：标题15px / 年龄8px / 身份8px，精致不喧宾夺主</p>
-</div>
+  <h1 class="doc-title">Life Game · 大厅「选择身份」交互方案</h1>
+  <p class="doc-sub">上下滑动浏览。每个卡片为全宽游戏场景（横屏比例示意），无手机外框。</p>
 
-<div class="scene">
-  <div class="bg"></div>
-  <div class="bar">
-    <div class="chip c-gold">💰 1280</div>
-    <div class="chip c-blue">⚡ x4</div>
-    <div class="chip c-purple">💀 12/20</div>
-    <div class="chip c-gold bar-r">🎒 装备</div>
+  <!-- ========== 年龄选择（优化版） ========== -->
+  <div class="section">
+    <div class="section-label">年龄选择（优化版）</div>
+    <p class="section-desc">水墨山水基调背景；五段年龄以画轴卡片横向排布，顶栏为金币、体力、精英进度示意。</p>
   </div>
-  <div class="hdr">
-    <h1>迎接挑战</h1>
-    <p>选择你的人生篇章</p>
-  </div>
-  <div class="cards">
-    <div class="card">
-      <div class="c-name">少年</div>
-      <div class="c-age">12-17岁</div>
-      <div class="c-line"></div>
-      <div class="c-ids">初中生<br>高中生</div>
-    </div>
-    <div class="card">
-      <div class="c-name">弱冠</div>
-      <div class="c-age">18-24岁</div>
-      <div class="c-line"></div>
-      <div class="c-ids">大学生<br>研究生<br>基层职员</div>
-    </div>
-    <div class="card">
-      <div class="c-name">而立</div>
-      <div class="c-age">25-34岁</div>
-      <div class="c-line"></div>
-      <div class="c-ids">企业白领<br>创意工作者<br>职场女性<br>高端服务业</div>
-    </div>
-    <div class="card">
-      <div class="c-name">不惑</div>
-      <div class="c-age">35-49岁</div>
-      <div class="c-line"></div>
-      <div class="c-ids">企业管理者<br>内容创作者<br>科技从业<br>商务人士</div>
-    </div>
-    <div class="card">
-      <div class="c-name">知天命</div>
-      <div class="c-age">50-60岁</div>
-      <div class="c-line"></div>
-      <div class="c-ids">企业主/投资人<br>专业技术人员<br>都市中老年</div>
-    </div>
-  </div>
-  <div style="height:6px;"></div>
-  <div class="depths">
-    <div class="dp on"><div class="n">1</div><div class="l">初一上</div></div>
-    <div class="dp"><div class="n">2</div><div class="l">初一下</div></div>
-    <div class="dp"><div class="n">3</div><div class="l">初二上</div></div>
-    <div class="dp off"><div class="n">🔒4</div><div class="l">初二下</div><div class="r">还差8只精英怪</div></div>
-  </div>
-</div>
 
-<hr class="sep">
-
-<!-- ===== 方案A：画轴风身份 ===== -->
-<div class="label">
-  <h2>🅰️ 方案A · 画轴风身份卡片</h2>
-  <p>选"少年"后 → 身份也是画轴卡片，风格统一</p>
-</div>
-
-<div class="scene">
-  <div class="bg"></div>
-  <div class="bar">
-    <div class="chip c-gold">💰 1280</div>
-    <div class="chip c-blue">⚡ x4</div>
-  </div>
-  <div class="hdr">
-    <h1 style="font-size:17px;">少年 · 选择身份</h1>
-    <p>12-17岁 · 校园冒险</p>
-  </div>
-  <div class="cards">
-    <div class="id-card">
-      <div class="id-icon">📖</div>
-      <div class="id-name">初中生</div>
-      <div class="id-line"></div>
-      <div class="id-desc">校园初体验<br>8大学科全开<br>语文·数学·英语<br>历史·政治·物理<br>化学·生物</div>
-    </div>
-    <div class="id-card">
-      <div class="id-icon">📚</div>
-      <div class="id-name">高中生</div>
-      <div class="id-line"></div>
-      <div class="id-desc">进阶挑战<br>更高难度题库<br>更强势的学科怪<br>更丰厚的奖励</div>
-    </div>
-  </div>
-  <div class="back"><span>‹ 重选年龄</span></div>
-</div>
-
-<hr class="sep">
-
-<!-- ===== 方案B：横条列表 ===== -->
-<div class="label">
-  <h2>🅱️ 方案B · 横条列表式</h2>
-  <p>选"而立"后 → 身份用横条列表，信息密度高</p>
-</div>
-
-<div class="scene">
-  <div class="bg"></div>
-  <div class="bar">
-    <div class="chip c-gold">💰 1280</div>
-    <div class="chip c-blue">⚡ x4</div>
-    <div class="chip c-purple">💀 12/20</div>
-  </div>
-  <div class="hdr">
-    <h1 style="font-size:17px;">而立 · 选择身份</h1>
-    <p>25-34岁 · 职场精英的时代</p>
-  </div>
-  <div class="list">
-    <div class="row">
-      <div class="row-icon">🏢</div>
-      <div class="row-text">
-        <div class="row-name">企业白领</div>
-        <div class="row-desc">互联网 / 传媒 / 金融</div>
+  <div class="scene" aria-label="年龄选择场景">
+    <div class="bg-mount"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <span class="stat-pill"><span class="icon" aria-hidden="true">💰</span>12,580</span>
+        <span class="stat-pill alt"><span class="icon" aria-hidden="true">⚡</span>体力 36/60</span>
+        <span class="stat-pill elite">精英进度 3/10</span>
       </div>
-      <div class="row-arrow">›</div>
-    </div>
-    <div class="row">
-      <div class="row-icon">🎨</div>
-      <div class="row-text">
-        <div class="row-name">创意工作者</div>
-        <div class="row-desc">自媒体 / 博主 / 设计师</div>
+      <div class="age-rail-wrap">
+        <div class="age-rail">
+          <div class="scroll-card">
+            <div class="scroll-gold-line line-top"></div>
+            <div class="title-classic">少年</div>
+            <div class="age-num">12–17 岁</div>
+            <div class="divider-faint"></div>
+            <div class="role-lines">初中生<br>高中生</div>
+            <div class="scroll-gold-line line-bot"></div>
+          </div>
+          <div class="scroll-card">
+            <div class="scroll-gold-line line-top"></div>
+            <div class="title-classic">弱冠</div>
+            <div class="age-num">18–24 岁</div>
+            <div class="divider-faint"></div>
+            <div class="role-lines">大学生<br>初入职场</div>
+            <div class="scroll-gold-line line-bot"></div>
+          </div>
+          <div class="scroll-card">
+            <div class="scroll-gold-line line-top"></div>
+            <div class="title-classic">而立</div>
+            <div class="age-num">25–34 岁</div>
+            <div class="divider-faint"></div>
+            <div class="role-lines">企业职员<br>自由职业</div>
+            <div class="scroll-gold-line line-bot"></div>
+          </div>
+          <div class="scroll-card">
+            <div class="scroll-gold-line line-top"></div>
+            <div class="title-classic">不惑</div>
+            <div class="age-num">35–49 岁</div>
+            <div class="divider-faint"></div>
+            <div class="role-lines">中层管理<br>资深专业</div>
+            <div class="scroll-gold-line line-bot"></div>
+          </div>
+          <div class="scroll-card">
+            <div class="scroll-gold-line line-top"></div>
+            <div class="title-classic">知天命</div>
+            <div class="age-num">50–60 岁</div>
+            <div class="divider-faint"></div>
+            <div class="role-lines">企业高管<br>顾问专家</div>
+            <div class="scroll-gold-line line-bot"></div>
+          </div>
+        </div>
       </div>
-      <div class="row-arrow">›</div>
     </div>
-    <div class="row">
-      <div class="row-icon">👩‍💼</div>
-      <div class="row-text">
-        <div class="row-name">职场女性</div>
-        <div class="row-desc">高线城市 · 职场上升期</div>
+  </div>
+
+  <!-- ========== 方案A ========== -->
+  <div class="section">
+    <div class="section-label">方案 A：画轴风身份卡片</div>
+    <p class="section-desc">在「少年（12–17 岁）」之下的身份选择：沿用画轴卡片语言，emoji + 身份名 + 短描述。</p>
+  </div>
+
+  <div class="scene scene-a" aria-label="方案A 身份选择">
+    <div class="bg-mount"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <span class="stat-pill"><span class="icon">💰</span>12,580</span>
+        <span class="stat-pill alt"><span class="icon">⚡</span>体力 36/60</span>
+        <span class="stat-pill elite">精英进度 3/10</span>
       </div>
-      <div class="row-arrow">›</div>
-    </div>
-    <div class="row">
-      <div class="row-icon">💎</div>
-      <div class="row-text">
-        <div class="row-name">高端服务业</div>
-        <div class="row-desc">医美 / 美妆 / 高端零售</div>
+      <div class="identity-rail">
+        <div class="age-rail">
+          <div class="scroll-card">
+            <div class="scroll-gold-line line-top"></div>
+            <div class="emoji-big" aria-hidden="true">📚</div>
+            <div class="title-classic">初中生</div>
+            <div class="divider-faint"></div>
+            <div class="id-desc">课业与成长并行，探索兴趣社交。</div>
+            <div class="scroll-gold-line line-bot"></div>
+          </div>
+          <div class="scroll-card">
+            <div class="scroll-gold-line line-top"></div>
+            <div class="emoji-big" aria-hidden="true">🎓</div>
+            <div class="title-classic">高中生</div>
+            <div class="divider-faint"></div>
+            <div class="id-desc">升学节奏紧凑，思辨与自律并重。</div>
+            <div class="scroll-gold-line line-bot"></div>
+          </div>
+        </div>
       </div>
-      <div class="row-arrow">›</div>
     </div>
   </div>
-  <div class="back"><span>‹ 重选年龄</span></div>
-</div>
 
-<hr class="sep">
-
-<!-- ===== 方案C：圆形角色 ===== -->
-<div class="label">
-  <h2>🅲 方案C · 圆形角色选择</h2>
-  <p>选"不惑"后 → 身份用大圆emoji，RPG/MOBA 感</p>
-</div>
-
-<div class="scene">
-  <div class="bg"></div>
-  <div class="bar">
-    <div class="chip c-gold">💰 1280</div>
-    <div class="chip c-blue">⚡ x4</div>
+  <!-- ========== 方案B ========== -->
+  <div class="section">
+    <div class="section-label">方案 B：横条列表式</div>
+    <p class="section-desc">在「而立（25–34 岁）」之下：一行一项，左图标、右箭头，信息密度高、扫读快。</p>
   </div>
-  <div class="hdr">
-    <h1 style="font-size:17px;">不惑 · 选择身份</h1>
-    <p>35-49岁 · 事业巅峰</p>
-  </div>
-  <div class="orbs">
-    <div class="orb">
-      <div class="orb-circle">👔</div>
-      <div class="orb-name">企业管理者</div>
-      <div class="orb-desc">中高层·决策者</div>
-    </div>
-    <div class="orb">
-      <div class="orb-circle">🎬</div>
-      <div class="orb-name">内容创作者</div>
-      <div class="orb-desc">自媒体·影响力</div>
-    </div>
-    <div class="orb">
-      <div class="orb-circle">💻</div>
-      <div class="orb-name">科技从业</div>
-      <div class="orb-desc">工程师·架构师</div>
-    </div>
-    <div class="orb">
-      <div class="orb-circle">🤝</div>
-      <div class="orb-name">商务人士</div>
-      <div class="orb-desc">双机党·高端</div>
-    </div>
-  </div>
-  <div class="back"><span>‹ 重选年龄</span></div>
-</div>
 
-<hr class="sep">
-
-<!-- ===== 补充：3选项适配（知天命） ===== -->
-<div class="label">
-  <h2>📌 补充 · 知天命（50-60岁）× 3方案</h2>
-  <p>只有3个身份选项时各方案效果</p>
-</div>
-
-<div style="font-size:12px;color:rgba(220,196,128,0.6);text-align:center;margin:4px 0 6px;">⬇️ 方案A：画轴卡片 × 3</div>
-<div class="scene">
-  <div class="bg"></div>
-  <div class="hdr" style="padding-top:14px;">
-    <h1 style="font-size:15px;">知天命 · 选择身份</h1>
-    <p>50-60岁 · 悠然人生</p>
-  </div>
-  <div class="cards">
-    <div class="id-card">
-      <div class="id-icon">🏦</div>
-      <div class="id-name">企业主/投资人</div>
-      <div class="id-line"></div>
-      <div class="id-desc">高净值·投资理财<br>资本运作高手</div>
-    </div>
-    <div class="id-card">
-      <div class="id-icon">🔬</div>
-      <div class="id-name">专业技术人员</div>
-      <div class="id-line"></div>
-      <div class="id-desc">返聘专家·技术权威<br>经验丰富·稳定</div>
-    </div>
-    <div class="id-card">
-      <div class="id-icon">🍵</div>
-      <div class="id-name">都市中老年</div>
-      <div class="id-line"></div>
-      <div class="id-desc">追求品质生活<br>悠然自在</div>
-    </div>
-  </div>
-</div>
-
-<div style="font-size:12px;color:rgba(100,200,255,0.6);text-align:center;margin:10px 0 6px;">⬇️ 方案B：横条列表 × 3</div>
-<div class="scene">
-  <div class="bg"></div>
-  <div class="hdr" style="padding-top:14px;">
-    <h1 style="font-size:15px;">知天命 · 选择身份</h1>
-    <p>50-60岁 · 悠然人生</p>
-  </div>
-  <div class="list">
-    <div class="row">
-      <div class="row-icon">🏦</div>
-      <div class="row-text">
-        <div class="row-name">企业主/投资人</div>
-        <div class="row-desc">高净值人群 · 资本运作</div>
+  <div class="scene" aria-label="方案B 身份选择">
+    <div class="bg-mount"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <span class="stat-pill"><span class="icon">💰</span>12,580</span>
+        <span class="stat-pill alt"><span class="icon">⚡</span>体力 36/60</span>
+        <span class="stat-pill elite">精英进度 3/10</span>
       </div>
-      <div class="row-arrow">›</div>
-    </div>
-    <div class="row">
-      <div class="row-icon">🔬</div>
-      <div class="row-text">
-        <div class="row-name">专业技术人员</div>
-        <div class="row-desc">返聘专家 · 技术权威</div>
+      <div class="list-wrap">
+        <div class="row-item">
+          <div class="row-ico" aria-hidden="true">👔</div>
+          <div class="row-mid">
+            <div class="row-name">企业白领</div>
+            <div class="row-desc">稳定通勤与团队协作，目标 KPI 清晰。</div>
+          </div>
+          <div class="row-arrow" aria-hidden="true">›</div>
+        </div>
+        <div class="row-item">
+          <div class="row-ico" aria-hidden="true">🎨</div>
+          <div class="row-mid">
+            <div class="row-name">创意工作者</div>
+            <div class="row-desc">项目制产出，灵感与时间自主博弈。</div>
+          </div>
+          <div class="row-arrow" aria-hidden="true">›</div>
+        </div>
+        <div class="row-item">
+          <div class="row-ico" aria-hidden="true">👩‍💼</div>
+          <div class="row-mid">
+            <div class="row-name">职场女性</div>
+            <div class="row-desc">平衡事业与生活，软技能与专业并进。</div>
+          </div>
+          <div class="row-arrow" aria-hidden="true">›</div>
+        </div>
+        <div class="row-item">
+          <div class="row-ico" aria-hidden="true">✨</div>
+          <div class="row-mid">
+            <div class="row-name">高端服务业</div>
+            <div class="row-desc">以客户体验为中心，强调细节与口碑。</div>
+          </div>
+          <div class="row-arrow" aria-hidden="true">›</div>
+        </div>
       </div>
-      <div class="row-arrow">›</div>
-    </div>
-    <div class="row">
-      <div class="row-icon">🍵</div>
-      <div class="row-text">
-        <div class="row-name">都市中老年</div>
-        <div class="row-desc">追求品质 · 悠然自在</div>
-      </div>
-      <div class="row-arrow">›</div>
     </div>
   </div>
-</div>
 
-<div style="font-size:12px;color:rgba(199,125,255,0.6);text-align:center;margin:10px 0 6px;">⬇️ 方案C：圆形角色 × 3</div>
-<div class="scene">
-  <div class="bg"></div>
-  <div class="hdr" style="padding-top:14px;">
-    <h1 style="font-size:15px;">知天命 · 选择身份</h1>
-    <p>50-60岁 · 悠然人生</p>
+  <!-- ========== 方案C ========== -->
+  <div class="section">
+    <div class="section-label">方案 C：圆形角色选择</div>
+    <p class="section-desc">在「不惑（35–49 岁）」之下：大圆头像 + 名称，接近 MOBA 选角节奏，仪式感强。</p>
   </div>
-  <div class="orbs">
-    <div class="orb">
-      <div class="orb-circle">🏦</div>
-      <div class="orb-name">企业主/投资人</div>
-      <div class="orb-desc">高净值·资本</div>
-    </div>
-    <div class="orb">
-      <div class="orb-circle">🔬</div>
-      <div class="orb-name">专业技术人员</div>
-      <div class="orb-desc">专家·返聘</div>
-    </div>
-    <div class="orb">
-      <div class="orb-circle">🍵</div>
-      <div class="orb-name">都市中老年</div>
-      <div class="orb-desc">品质·悠然</div>
+
+  <div class="scene" aria-label="方案C 身份选择">
+    <div class="bg-mount"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <span class="stat-pill"><span class="icon">💰</span>12,580</span>
+        <span class="stat-pill alt"><span class="icon">⚡</span>体力 36/60</span>
+        <span class="stat-pill elite">精英进度 3/10</span>
+      </div>
+      <div class="moba-wrap">
+        <div class="moba-hero">
+          <div class="moba-ring" aria-hidden="true">🏢</div>
+          <div class="moba-name">企业管理者</div>
+          <div class="moba-desc">带团队、定策略，扛业绩与组织氛围。</div>
+        </div>
+        <div class="moba-hero">
+          <div class="moba-ring" aria-hidden="true">🎬</div>
+          <div class="moba-name">内容创作者</div>
+          <div class="moba-desc">表达观点与审美，持续经营个人品牌。</div>
+        </div>
+        <div class="moba-hero">
+          <div class="moba-ring" aria-hidden="true">💻</div>
+          <div class="moba-name">科技从业</div>
+          <div class="moba-desc">产品或研发一线，迭代快、学习曲线陡。</div>
+        </div>
+        <div class="moba-hero">
+          <div class="moba-ring" aria-hidden="true">🤝</div>
+          <div class="moba-name">商务人士</div>
+          <div class="moba-desc">拓展资源与谈判，链接上下游。</div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
+
+  <!-- ========== 知天命：仅 3 个身份时的对比 ========== -->
+  <div class="section">
+    <div class="section-label">补充：知天命（50–60 岁）仅 3 个身份</div>
+    <p class="section-desc">同一套文案与数量约束下，三种布局并排对比，便于评估留白与点击区域。</p>
+  </div>
+
+  <div class="scene compare-scene" aria-label="知天命 三方案对比">
+    <div class="bg-mount"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <span class="stat-pill"><span class="icon">💰</span>12,580</span>
+        <span class="stat-pill alt"><span class="icon">⚡</span>体力 36/60</span>
+        <span class="stat-pill elite">精英进度 3/10</span>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-col">
+          <h4>方案 A · 画轴</h4>
+          <div class="mini-scroll">
+            <div class="scroll-card">
+              <div class="scroll-gold-line line-top"></div>
+              <div class="emoji-big">🏛️</div>
+              <div class="title-classic">退休政务</div>
+              <div class="divider-faint"></div>
+              <div class="id-desc">制度经验丰富，擅长协调与合规。</div>
+              <div class="scroll-gold-line line-bot"></div>
+            </div>
+            <div class="scroll-card">
+              <div class="scroll-gold-line line-top"></div>
+              <div class="emoji-big">📈</div>
+              <div class="title-classic">投资顾问</div>
+              <div class="divider-faint"></div>
+              <div class="id-desc">资产配置与长期规划并重。</div>
+              <div class="scroll-gold-line line-bot"></div>
+            </div>
+            <div class="scroll-card">
+              <div class="scroll-gold-line line-top"></div>
+              <div class="emoji-big">🌿</div>
+              <div class="title-classic">文化养生</div>
+              <div class="divider-faint"></div>
+              <div class="id-desc">慢节奏生活，健康与人文同修。</div>
+              <div class="scroll-gold-line line-bot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="compare-col">
+          <h4>方案 B · 横条</h4>
+          <div class="mini-list">
+            <div class="row-item">
+              <div class="row-ico">🏛️</div>
+              <div class="row-mid">
+                <div class="row-name">退休政务</div>
+                <div class="row-desc">制度经验丰富，擅长协调与合规。</div>
+              </div>
+              <div class="row-arrow">›</div>
+            </div>
+            <div class="row-item">
+              <div class="row-ico">📈</div>
+              <div class="row-mid">
+                <div class="row-name">投资顾问</div>
+                <div class="row-desc">资产配置与长期规划并重。</div>
+              </div>
+              <div class="row-arrow">›</div>
+            </div>
+            <div class="row-item">
+              <div class="row-ico">🌿</div>
+              <div class="row-mid">
+                <div class="row-name">文化养生</div>
+                <div class="row-desc">慢节奏生活，健康与人文同修。</div>
+              </div>
+              <div class="row-arrow">›</div>
+            </div>
+          </div>
+        </div>
+        <div class="compare-col">
+          <h4>方案 C · 圆形</h4>
+          <div class="mini-moba">
+            <div class="moba-hero">
+              <div class="moba-ring">🏛️</div>
+              <div class="moba-text">
+                <div class="moba-name">退休政务</div>
+                <div class="moba-desc">制度经验丰富，擅长协调与合规。</div>
+              </div>
+            </div>
+            <div class="moba-hero">
+              <div class="moba-ring">📈</div>
+              <div class="moba-text">
+                <div class="moba-name">投资顾问</div>
+                <div class="moba-desc">资产配置与长期规划并重。</div>
+              </div>
+            </div>
+            <div class="moba-hero">
+              <div class="moba-ring">🌿</div>
+              <div class="moba-text">
+                <div class="moba-name">文化养生</div>
+                <div class="moba-desc">慢节奏生活，健康与人文同修。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint-feishu">说明：年龄卡内年龄与身份列表小字按飞书内置浏览器可读性设为 12px；古文主标题保持 15px。场景宽 100%，比例由 aspect-ratio 控制。</p>
 
 </body>
 </html>
