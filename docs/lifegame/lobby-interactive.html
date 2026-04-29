@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Life Game · 大厅</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      min-height: 100%;
+      width: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.92);
+      background:
+        radial-gradient(ellipse 120% 80% at 50% 20%, rgba(120, 180, 130, 0.35), transparent 55%),
+        linear-gradient(165deg, #0d2418 0%, #1a3d28 25%, #2d5a3d 55%, #4a8a5c 82%, #7ab88a 100%);
+      overflow-x: hidden;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .lobby {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    /* —— 顶栏 —— */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      padding: 10px 12px 8px;
+      gap: 8px;
+    }
+
+    .top-stats {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-size: clamp(12px, 3.2vw, 15px);
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
+    .top-stats span {
+      white-space: nowrap;
+    }
+
+    .btn-equip {
+      flex-shrink: 0;
+      min-height: 36px;
+      min-width: 56px;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #dcc480;
+      background: rgba(15, 30, 22, 0.55);
+      border: 1px solid #dcc480;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-equip:active {
+      transform: scale(0.96);
+      background: rgba(15, 30, 22, 0.75);
+    }
+
+    /* —— 主舞台 —— */
+    .stage-wrap {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 4px 8px 8px;
+      overflow: hidden;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .age-row {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: flex-end;
+      gap: clamp(4px, 1.5vw, 10px);
+      width: 100%;
+      transform: translateY(0);
+      transition: transform 0.45s ease-out;
+      z-index: 2;
+    }
+
+    .lobby--has-selection .age-row {
+      transform: translateY(-14vh);
+    }
+
+    @media (orientation: portrait) {
+      .lobby--has-selection .age-row {
+        transform: translateY(-10vh);
+      }
+    }
+
+    /* 画轴卡片 */
+    .scroll-card {
+      position: relative;
+      background: rgba(12, 28, 20, 0.78);
+      border: 2px solid #dcc480;
+      border-radius: 10px;
+      padding: 10px 8px 12px;
+      cursor: pointer;
+      transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        opacity 0.25s ease,
+        transform 0.15s ease;
+      -webkit-user-select: none;
+      user-select: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      min-width: 0;
+      flex: 1 1 0;
+      max-width: 18%;
+      min-height: 96px;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .scroll-card::before,
+    .scroll-card::after {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #dcc480 20%, #dcc480 80%, transparent);
+      pointer-events: none;
+    }
+
+    .scroll-card::before { top: 5px; }
+    .scroll-card::after { bottom: 5px; }
+
+    .scroll-card__title {
+      font-size: clamp(12px, 3.4vw, 16px);
+      font-weight: 700;
+      color: #dcc480;
+      line-height: 1.25;
+    }
+
+    .scroll-card__age {
+      margin-top: 4px;
+      font-size: clamp(11px, 2.8vw, 13px);
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .scroll-card:active:not(.scroll-card--dimmed) {
+      transform: scale(0.97);
+    }
+
+    .scroll-card--selected {
+      border-color: #f5e6a5;
+      box-shadow:
+        0 0 0 2px rgba(245, 230, 165, 0.45),
+        0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .scroll-card--selected::before,
+    .scroll-card--selected::after {
+      background: linear-gradient(90deg, transparent, #f5e6a5 15%, #f5e6a5 85%, transparent);
+    }
+
+    .scroll-card--dimmed {
+      opacity: 0.48;
+    }
+
+    /* 身份层 */
+    .identity-layer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 6px 4px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.32s ease-out, transform 0.32s ease-out;
+      z-index: 1;
+    }
+
+    .lobby--has-selection .identity-layer {
+      pointer-events: auto;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .identity-layer .scroll-card {
+      flex: 0 1 auto;
+      max-width: 30%;
+      min-width: 100px;
+      aspect-ratio: 5 / 4;
+      min-height: unset;
+      padding: 8px 6px 10px;
+    }
+
+    .identity-head {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: clamp(12px, 3vw, 14px);
+      font-weight: 700;
+      color: #dcc480;
+      margin-bottom: 4px;
+    }
+
+    .identity-emoji {
+      font-size: clamp(13px, 3.5vw, 17px);
+      line-height: 1;
+    }
+
+    .identity-line {
+      width: 80%;
+      height: 1px;
+      margin: 4px auto;
+      background: linear-gradient(90deg, transparent, rgba(220, 196, 128, 0.7), transparent);
+    }
+
+    .identity-desc {
+      font-size: 12px;
+      line-height: 1.35;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    /* —— 底部副本深度 —— */
+    .depth-bar {
+      flex-shrink: 0;
+      padding: 8px 10px 14px;
+      font-size: clamp(12px, 2.9vw, 14px);
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.82);
+      text-align: center;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.28));
+      word-break: keep-all;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(72px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(20px);
+      max-width: 88%;
+      padding: 10px 16px;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
+      color: #1a2518;
+      background: rgba(245, 230, 165, 0.94);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
+      z-index: 9999;
+      font-weight: 600;
+    }
+
+    .toast--show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 占位：身份区高度，避免折叠时挤压 */
+    .stage-inner {
+      position: relative;
+      min-height: min(52vh, 380px);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="lobby" id="lobby">
+    <header class="top-bar">
+      <div class="top-stats" aria-label="资源">
+        <span>金币💰1280</span>
+        <span>体力⚡x4</span>
+        <span>精英💀12/20</span>
+      </div>
+      <button type="button" class="btn-equip" id="btnEquip" aria-label="装备">装备</button>
+    </header>
+
+    <div class="stage-wrap">
+      <div class="stage">
+        <div class="stage-inner">
+          <div class="age-row" id="ageRow" role="list"></div>
+
+          <div class="identity-layer" id="identityLayer" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="depth-bar">
+      <span class="depth-text">1初一上✅ 2初一下 3初二上 🔒4初二下(还差8只精英怪)</span>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+(function () {
+  var AGE_DATA = [
+    {
+      key: "shaonian",
+      title: "少年",
+      age: "12-17岁",
+      identities: [
+        { emoji: "📖", name: "初中生", desc: "校园初体验" },
+        { emoji: "📚", name: "高中生", desc: "进阶挑战" }
+      ]
+    },
+    {
+      key: "ruoguan",
+      title: "弱冠",
+      age: "18-24岁",
+      identities: [
+        { emoji: "🎓", name: "大学生", desc: "大学时光" },
+        { emoji: "🔬", name: "研究生", desc: "学术之路" },
+        { emoji: "💼", name: "基层职员", desc: "职场起步" }
+      ]
+    },
+    {
+      key: "erli",
+      title: "而立",
+      age: "25-34岁",
+      identities: [
+        { emoji: "🏢", name: "企业白领", desc: "互联网/金融" },
+        { emoji: "🎨", name: "创意工作者", desc: "自媒体/设计" },
+        { emoji: "👩‍💼", name: "职场女性", desc: "职场上升期" },
+        { emoji: "💎", name: "高端服务业", desc: "医美/高端零售" }
+      ]
+    },
+    {
+      key: "buhuo",
+      title: "不惑",
+      age: "35-49岁",
+      identities: [
+        { emoji: "👔", name: "企业管理者", desc: "中高层管理" },
+        { emoji: "🎬", name: "内容创作者", desc: "自媒体/影响力" },
+        { emoji: "💻", name: "科技从业", desc: "工程师/架构师" },
+        { emoji: "🤝", name: "商务人士", desc: "商务/高端市场" }
+      ]
+    },
+    {
+      key: "zhitianming",
+      title: "知天命",
+      age: "50-60岁",
+      identities: [
+        { emoji: "🏦", name: "企业主/投资人", desc: "资本运作" },
+        { emoji: "🔬", name: "专业技术人员", desc: "返聘专家" },
+        { emoji: "🍵", name: "都市中老年", desc: "品质生活" }
+      ]
+    }
+  ];
+
+  var lobby = document.getElementById("lobby");
+  var ageRow = document.getElementById("ageRow");
+  var identityLayer = document.getElementById("identityLayer");
+  var toastEl = document.getElementById("toast");
+  var selectedIndex = null;
+  var toastTimer = null;
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("toast--show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove("toast--show");
+    }, 2200);
+  }
+
+  function renderAgeCards() {
+    ageRow.innerHTML = "";
+    AGE_DATA.forEach(function (item, index) {
+      var el = document.createElement("button");
+      el.type = "button";
+      el.className = "scroll-card";
+      el.setAttribute("role", "listitem");
+      el.dataset.index = String(index);
+      el.innerHTML =
+        '<span class="scroll-card__title">' + item.title + "</span>" +
+        '<span class="scroll-card__age">' + item.age + "</span>";
+      el.addEventListener("click", function () { onAgeClick(index); });
+      ageRow.appendChild(el);
+    });
+    updateAgeVisuals();
+  }
+
+  function updateAgeVisuals() {
+    var cards = ageRow.querySelectorAll(".scroll-card");
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      c.classList.remove("scroll-card--selected", "scroll-card--dimmed");
+      if (selectedIndex === null) {
+        continue;
+      }
+      if (i === selectedIndex) {
+        c.classList.add("scroll-card--selected");
+      } else {
+        c.classList.add("scroll-card--dimmed");
+      }
+    }
+  }
+
+  function renderIdentities() {
+    identityLayer.innerHTML = "";
+    if (selectedIndex === null) {
+      return;
+    }
+    var data = AGE_DATA[selectedIndex];
+    data.identities.forEach(function (id) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "scroll-card";
+      btn.innerHTML =
+        '<div class="identity-head"><span class="identity-emoji">' + id.emoji + "</span>" +
+        "<span>" + id.name + "</span></div>" +
+        '<div class="identity-line"></div>' +
+        '<div class="identity-desc">' + id.desc + "</div>";
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        showToast("已选择 " + id.name + "，准备进入游戏");
+      });
+      identityLayer.appendChild(btn);
+    });
+  }
+
+  function onAgeClick(index) {
+    if (selectedIndex === index) {
+      selectedIndex = null;
+      lobby.classList.remove("lobby--has-selection");
+      updateAgeVisuals();
+      renderIdentities();
+      return;
+    }
+    selectedIndex = index;
+    lobby.classList.add("lobby--has-selection");
+    updateAgeVisuals();
+    renderIdentities();
+  }
+
+  document.getElementById("btnEquip").addEventListener("click", function () {
+    showToast("装备功能（原型）");
+  });
+
+  renderAgeCards();
+})();
+  </script>
+</body>
+</html>
