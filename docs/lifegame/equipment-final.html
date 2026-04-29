@@ -144,29 +144,48 @@
       padding: 10px;
     }
 
-    .col-char {
-      flex: 0 0 35%;
-      max-width: 38%;
+    /* 左侧：角色居中 + 槽位环绕（约 55%） */
+    .col-figure-ring {
+      flex: 0 0 55%;
+      max-width: 55%;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      min-width: 0;
+      gap: 6px;
     }
 
-    .col-slots {
-      flex: 0 0 25%;
-      max-width: 28%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      padding-top: 4px;
-      min-width: 0;
+    .equip-arena {
+      position: relative;
+      width: 100%;
+      max-width: min(100%, 440px);
+      margin: 0 auto;
+      aspect-ratio: 1 / 1;
+      max-height: min(52vh, 420px);
+    }
+
+    .equip-links {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .equip-links .link-line {
+      stroke: var(--gold);
+      stroke-width: 0.45;
+      stroke-dasharray: 1.35 0.85;
+      stroke-linecap: round;
+      opacity: 0.72;
+      vector-effect: non-scaling-stroke;
     }
 
     .col-stats {
-      flex: 1 1 40%;
+      flex: 1 1 0;
       min-width: 0;
       display: flex;
       flex-direction: column;
@@ -174,16 +193,22 @@
       overflow: hidden;
     }
 
-    /* 角色展示区 */
+    /* 角色展示区（位于环绕区中心） */
     .figure-wrap {
-      position: relative;
-      width: 100%;
-      min-height: 180px;
-      max-height: min(52vh, 420px);
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      width: 44%;
+      height: 56%;
+      min-height: 0;
+      max-height: none;
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      padding-bottom: 8px;
+      padding-bottom: 4px;
+      pointer-events: none;
     }
 
     .figure-glow {
@@ -202,8 +227,8 @@
 
     .student {
       position: relative;
-      width: min(72%, 160px);
-      height: min(85%, 220px);
+      width: min(88%, 150px);
+      height: min(88%, 200px);
       filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45));
     }
 
@@ -414,9 +439,25 @@
 
     .char-meta {
       text-align: center;
-      margin-top: 6px;
+      margin-top: 2px;
       padding: 0 4px;
       font-size: clamp(12px, 3vw, 14px);
+      flex-shrink: 0;
+    }
+
+    /* 槽位环绕层 */
+    .slot-ring {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .slot-list {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      list-style: none;
     }
 
     .char-name {
@@ -431,17 +472,8 @@
       font-size: clamp(12px, 2.9vw, 13px);
     }
 
-    /* 槽位 */
-    .slot-list {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 7px;
-      width: 100%;
-    }
-
     .slot-btn {
-      position: relative;
+      position: absolute;
       width: 50px;
       height: 50px;
       border-radius: 10px;
@@ -461,6 +493,8 @@
       padding: 0;
       font: inherit;
       color: inherit;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
     }
 
     .slot-btn.weapon-slot {
@@ -481,7 +515,7 @@
     }
 
     .slot-btn.selected {
-      transform: scale(1.08);
+      transform: translate(-50%, -50%) scale(1.08);
       border-color: var(--gold-bright);
       box-shadow:
         0 0 0 2px rgba(232, 200, 74, 0.35),
@@ -497,6 +531,15 @@
     .weapon-slot .slot-emoji {
       font-size: 30px;
     }
+
+    /* 槽位方位（相对 equip-arena，与 SVG 端点一致） */
+    .slot-pos-weapon { left: 90%; top: 50%; }
+    .slot-pos-helmet { left: 50%; top: 9%; }
+    .slot-pos-armor { left: 22%; top: 20%; }
+    .slot-pos-bracers { left: 11%; top: 50%; }
+    .slot-pos-legs { left: 22%; top: 80%; }
+    .slot-pos-shoes { left: 50%; top: 91%; }
+    .slot-pos-gloves { left: 78%; top: 80%; }
 
     .slot-lv {
       position: absolute;
@@ -699,51 +742,39 @@
       pointer-events: none;
     }
 
-    /* 竖屏：上下布局 */
+    /* 竖屏：上角色+环绕，下属性 */
     @media (max-width: 720px), (orientation: portrait) {
       .main-row {
         flex-direction: column;
         align-items: stretch;
       }
 
-      .col-char {
+      .col-figure-ring {
         flex: 0 0 auto;
         max-width: 100%;
         width: 100%;
+      }
+
+      .equip-arena {
+        max-width: min(100%, 360px);
+        max-height: min(42vh, 340px);
       }
 
       .figure-wrap {
-        max-height: min(38vh, 280px);
-        min-height: 140px;
+        width: 46%;
+        height: 54%;
       }
 
       .student {
-        width: min(48%, 140px);
-        height: min(72%, 200px);
-      }
-
-      .col-slots {
-        flex: 0 0 auto;
-        max-width: 100%;
-        width: 100%;
-        flex-direction: column;
-        align-items: center;
-        padding: 6px 4px;
-      }
-
-      .slot-list {
-        flex-direction: column;
-        flex-wrap: nowrap;
-        align-items: center;
-      }
-
-      .slot-list .weapon-slot {
-        order: -1;
+        width: min(82%, 130px);
+        height: min(82%, 180px);
       }
 
       .col-stats {
         flex: 1 1 auto;
+        max-width: 100%;
         width: 100%;
+        min-height: 0;
       }
 
       .stat-grid {
@@ -751,32 +782,20 @@
       }
     }
 
-    /* 横屏宽屏：三栏 */
+    /* 横屏：左 55% 环绕 + 右属性 */
     @media (min-width: 721px) and (orientation: landscape) {
       .main-row {
         flex-direction: row;
       }
 
-      .col-char {
-        flex: 0 0 35%;
-        max-width: 35%;
-      }
-
-      .col-slots {
-        flex: 0 0 25%;
-        max-width: 25%;
+      .col-figure-ring {
+        flex: 0 0 55%;
+        max-width: 55%;
       }
 
       .col-stats {
-        flex: 1 1 40%;
-      }
-
-      .slot-list {
-        flex-direction: column;
-      }
-
-      .weapon-slot {
-        order: 0;
+        flex: 1 1 0;
+        min-width: 0;
       }
     }
 
@@ -797,47 +816,57 @@
     </header>
 
     <div class="main-row">
-      <section class="col-char" aria-label="角色展示">
-        <div class="figure-wrap">
-          <div class="figure-glow" aria-hidden="true"></div>
-          <div class="student" id="studentFig">
-            <div class="stu-hair"></div>
-            <div class="stu-head">
-              <span class="stu-eye left"></span>
-              <span class="stu-eye right"></span>
-              <span class="stu-blush left"></span>
-              <span class="stu-blush right"></span>
-            </div>
-            <div class="stu-body">
-              <div class="stu-tie"></div>
-            </div>
-            <div class="stu-arm left"><span class="stu-hand"></span></div>
-            <div class="stu-arm right">
-              <span class="stu-hand"></span>
-              <span class="weapon-held" id="weaponHeldEmoji" aria-hidden="true">🖋️</span>
-            </div>
-            <div class="stu-leg left"><span class="stu-shoe"></span></div>
-            <div class="stu-leg right"><span class="stu-shoe"></span></div>
-            <div class="backpack" title="书包"></div>
+      <section class="col-figure-ring" aria-label="角色与装备槽位">
+        <div class="equip-arena">
+          <svg class="equip-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <line class="link-line" x1="50" y1="50" x2="50" y2="9" />
+            <line class="link-line" x1="50" y1="50" x2="22" y2="20" />
+            <line class="link-line" x1="50" y1="50" x2="11" y2="50" />
+            <line class="link-line" x1="50" y1="50" x2="22" y2="80" />
+            <line class="link-line" x1="50" y1="50" x2="50" y2="91" />
+            <line class="link-line" x1="50" y1="50" x2="78" y2="80" />
+            <line class="link-line" x1="50" y1="50" x2="90" y2="50" />
+          </svg>
+          <div class="figure-wrap">
+            <div class="figure-glow" aria-hidden="true"></div>
+            <div class="student" id="studentFig">
+              <div class="stu-hair"></div>
+              <div class="stu-head">
+                <span class="stu-eye left"></span>
+                <span class="stu-eye right"></span>
+                <span class="stu-blush left"></span>
+                <span class="stu-blush right"></span>
+              </div>
+              <div class="stu-body">
+                <div class="stu-tie"></div>
+              </div>
+              <div class="stu-arm left"><span class="stu-hand"></span></div>
+              <div class="stu-arm right">
+                <span class="stu-hand"></span>
+                <span class="weapon-held" id="weaponHeldEmoji" aria-hidden="true">🖋️</span>
+              </div>
+              <div class="stu-leg left"><span class="stu-shoe"></span></div>
+              <div class="stu-leg right"><span class="stu-shoe"></span></div>
+              <div class="backpack" title="书包"></div>
 
-            <span class="equip-hotspot hotspot-helmet on" data-slot="helmet"></span>
-            <span class="equip-hotspot hotspot-armor on" data-slot="armor"></span>
-            <span class="equip-hotspot hotspot-bracer-l on" data-slot="bracers"></span>
-            <span class="equip-hotspot hotspot-bracer-r on" data-slot="bracers"></span>
-            <span class="equip-hotspot hotspot-leg on" data-slot="legs"></span>
-            <span class="equip-hotspot hotspot-shoe on" data-slot="shoes"></span>
-            <span class="equip-hotspot hotspot-glove" data-slot="gloves"></span>
+              <span class="equip-hotspot hotspot-helmet on" data-slot="helmet"></span>
+              <span class="equip-hotspot hotspot-armor on" data-slot="armor"></span>
+              <span class="equip-hotspot hotspot-bracer-l on" data-slot="bracers"></span>
+              <span class="equip-hotspot hotspot-bracer-r on" data-slot="bracers"></span>
+              <span class="equip-hotspot hotspot-leg on" data-slot="legs"></span>
+              <span class="equip-hotspot hotspot-shoe on" data-slot="shoes"></span>
+              <span class="equip-hotspot hotspot-glove" data-slot="gloves"></span>
+            </div>
           </div>
+          <nav class="slot-ring" aria-label="装备槽位">
+            <div class="slot-list" id="slotList"></div>
+          </nav>
         </div>
         <div class="char-meta">
           <div class="char-name">林小小</div>
           <div class="char-rank">Lv5 · 「学习委员」</div>
         </div>
       </section>
-
-      <nav class="col-slots" aria-label="装备槽位">
-        <div class="slot-list" id="slotList"></div>
-      </nav>
 
       <aside class="col-stats" aria-label="属性与详情">
         <div class="stats-panel">
@@ -1015,6 +1044,7 @@
             btn.setAttribute('aria-label', s.label + ' ' + s.titleShort + ' Lv' + s.lv);
           }
           btn.dataset.index = String(idx);
+          btn.classList.add('slot-pos-' + s.id);
 
           var emoji = document.createElement('span');
           emoji.className = 'slot-emoji';
