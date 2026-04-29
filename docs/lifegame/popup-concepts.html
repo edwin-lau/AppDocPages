@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Life Game · 顶栏资源说明弹出原型</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.94);
+      background: #0a1610;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100dvh;
+    }
+
+    .page-title {
+      padding: 14px 16px 10px;
+      font-size: clamp(14px, 4vw, 17px);
+      font-weight: 700;
+      text-align: center;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+      border-bottom: 1px solid rgba(220, 196, 128, 0.25);
+      margin-bottom: 12px;
+    }
+
+    /* —— 场景卡片（绿色渐变，横向占满）—— */
+    .scheme-card {
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 14px 12px 18px;
+      border-radius: 14px;
+      background:
+        radial-gradient(ellipse 90% 60% at 50% 0%, rgba(140, 210, 160, 0.35), transparent 52%),
+        radial-gradient(ellipse 70% 45% at 15% 85%, rgba(70, 110, 85, 0.28), transparent 42%),
+        linear-gradient(165deg, #0d2218 0%, #1a3d2a 28%, #2d5a40 58%, #4a815f 88%, #6aaf82 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 24px rgba(0,0,0,0.35);
+    }
+
+    .scheme-head {
+      font-size: clamp(13px, 3.6vw, 15px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(220, 196, 128, 0.35);
+      color: #f5ecd4;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+
+    /* —— 迷你大厅顶栏 —— */
+    .mini-lobby {
+      position: relative;
+      border-radius: 10px;
+      padding: 8px 8px 10px;
+      background: rgba(8, 22, 15, 0.45);
+      border: 1px solid rgba(220, 196, 128, 0.22);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      font-size: clamp(12px, 3.2vw, 14px);
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    .tb-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      background: rgba(12, 28, 20, 0.55);
+      border: 1px solid rgba(220, 196, 128, 0.35);
+      color: #fff;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .tb-item:active {
+      transform: scale(0.96);
+      background: rgba(12, 28, 20, 0.85);
+    }
+
+    .tb-item.tb-equip {
+      color: #dcc480;
+      border-color: #dcc480;
+    }
+
+    /* —— 水墨画轴面板基底 —— */
+    .ink-panel {
+      background: rgba(12, 26, 18, 0.94);
+      border: 2px solid #dcc480;
+      border-radius: 12px;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.35) inset,
+        0 12px 40px rgba(0,0,0,0.45);
+      overflow: hidden;
+    }
+
+    .ink-panel::before,
+    .ink-panel::after {
+      content: "";
+      display: block;
+      height: 2px;
+      margin: 0 12px;
+      background: linear-gradient(90deg, transparent, rgba(220,196,128,0.85) 18%, rgba(220,196,128,0.85) 82%, transparent);
+      opacity: 0.7;
+    }
+
+    .ink-panel::before { margin-top: 8px; }
+    .ink-panel::after { margin-bottom: 8px; }
+
+    .ink-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px 8px;
+      font-size: clamp(14px, 3.8vw, 16px);
+      font-weight: 700;
+      color: #f0e6c8;
+    }
+
+    .ink-header .ico {
+      font-size: 1.35em;
+      line-height: 1;
+    }
+
+    .ink-body {
+      padding: 4px 16px 14px;
+      font-size: clamp(12px, 3.2vw, 14px);
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.88);
+      max-height: min(52vh, 380px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .ink-body h4 {
+      font-size: 12px;
+      margin: 10px 0 4px;
+      color: #dcc480;
+      font-weight: 700;
+    }
+
+    .ink-body h4:first-child { margin-top: 0; }
+
+    .ink-body p, .ink-body li {
+      margin: 4px 0;
+    }
+
+    .ink-body ul {
+      padding-left: 1.15em;
+      margin: 4px 0;
+    }
+
+    .tip-box {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(220, 196, 128, 0.1);
+      border: 1px solid rgba(220, 196, 128, 0.35);
+      font-size: 12px;
+      color: #efe6cc;
+    }
+
+    .btn-know {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 12px 16px;
+      font-size: clamp(13px, 3.4vw, 15px);
+      font-weight: 700;
+      color: #1a2518;
+      background: linear-gradient(180deg, #e8d59a 0%, #c9a85c 100%);
+      border: none;
+      border-top: 1px solid rgba(220, 196, 128, 0.5);
+      cursor: pointer;
+      transition: filter 0.15s ease, transform 0.12s ease;
+    }
+
+    .btn-know:active {
+      transform: scale(0.99);
+      filter: brightness(0.95);
+    }
+
+    /* ========== 方案 A：居中 Modal ========== */
+    .scheme-a .backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
+    }
+
+    .scheme-a .backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .scheme-a .modal-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 101;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
+    }
+
+    .scheme-a .modal-wrap.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .scheme-a .modal-inner {
+      pointer-events: auto;
+      width: 100%;
+      max-width: 360px;
+      transform: scale(0.82);
+      opacity: 0;
+      transition:
+        transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.28s ease;
+    }
+
+    .scheme-a .modal-wrap.open .modal-inner {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* ========== 方案 B：Bottom Sheet ========== */
+    .scheme-b .backdrop-b {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
+    }
+
+    .scheme-b .backdrop-b.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .scheme-b .sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 201;
+      height: 60vh;
+      max-height: 520px;
+      border-radius: 16px 16px 0 0;
+      transform: translateY(105%);
+      transition: transform 0.34s cubic-bezier(0.25, 0.9, 0.35, 1);
+      pointer-events: none;
+    }
+
+    .scheme-b .sheet.open {
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .scheme-b .sheet .ink-panel {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .scheme-b .sheet-drag {
+      flex-shrink: 0;
+      padding: 8px 0 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .scheme-b .sheet-drag:active { cursor: grabbing; }
+
+    .scheme-b .drag-bar {
+      width: 44px;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(220, 196, 128, 0.45);
+    }
+
+    .scheme-b .sheet-header-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px 6px;
+      font-size: clamp(14px, 3.8vw, 16px);
+      font-weight: 700;
+      color: #f0e6c8;
+    }
+
+    .scheme-b .sheet .ink-body {
+      flex: 1;
+      max-height: none;
+      min-height: 0;
+    }
+
+    /* ========== 方案 C：右侧滑出 ========== */
+    .scheme-c .backdrop-c {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
+    }
+
+    .scheme-c .backdrop-c.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .scheme-c .side-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 301;
+      width: min(50vw, 280px);
+      max-width: 92%;
+      transform: translateX(105%);
+      transition: transform 0.32s cubic-bezier(0.25, 0.9, 0.35, 1);
+      pointer-events: none;
+    }
+
+    .scheme-c .side-panel.open {
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .scheme-c .side-panel .ink-panel {
+      height: 100%;
+      border-radius: 0;
+      border-right: none;
+      border-top: none;
+      border-bottom: none;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .scheme-c .side-panel .ink-body {
+      flex: 1;
+      max-height: none;
+    }
+
+    /* ========== 方案 D：气泡卡片 ========== */
+    .scheme-d { position: relative; overflow: visible; }
+
+    .scheme-d .backdrop-d {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      background: transparent;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .scheme-d .backdrop-d.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .scheme-d .bubble-card {
+      position: fixed;
+      z-index: 401;
+      width: min(calc(100vw - 32px), 320px);
+      opacity: 0;
+      transform: scale(0.94) translateY(6px);
+      transition:
+        opacity 0.22s ease,
+        transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    .scheme-d .bubble-card.open {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .scheme-d .bubble-arrow {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      filter: drop-shadow(0 -1px 0 rgba(220,196,128,0.5));
+    }
+
+    .scheme-d .bubble-arrow.down {
+      bottom: -9px;
+      border-top: 10px solid rgba(12, 26, 18, 0.96);
+      border-bottom: none;
+    }
+
+    .scheme-d .bubble-arrow.up {
+      top: -9px;
+      border-bottom: 10px solid rgba(12, 26, 18, 0.96);
+      border-top: none;
+    }
+
+    .scheme-d .bubble-inner {
+      border: 2px solid #dcc480;
+      border-radius: 12px;
+      background: rgba(12, 26, 18, 0.96);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      overflow: hidden;
+    }
+
+    .scheme-d .bubble-inner .ink-header {
+      padding: 10px 12px 6px;
+      font-size: clamp(13px, 3.5vw, 15px);
+    }
+
+    .scheme-d .bubble-inner .ink-body {
+      max-height: 240px;
+      padding: 2px 12px 12px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .scheme-d .bubble-inner .tip-box {
+      font-size: 11px;
+      margin-top: 8px;
+    }
+
+    .scheme-d .bubble-inner h4 {
+      font-size: 11px;
+    }
+
+    @media (max-width: 360px) {
+      .top-bar { gap: 6px 8px; }
+      .tb-item { padding: 5px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-title">Life Game · 大厅顶栏资源说明 · 弹出交互原型（手机预览）</div>
+
+  <!-- ========== 方案 A ========== -->
+  <section class="scheme-card scheme-a" id="scheme-a">
+    <h2 class="scheme-head">方案 A：居中弹窗（经典 Modal）</h2>
+    <div class="mini-lobby">
+      <div class="top-bar tb-root" data-scheme="a">
+        <button type="button" class="tb-item" data-key="coin">💰 金币 1280</button>
+        <button type="button" class="tb-item" data-key="energy">⚡ 体力 x4</button>
+        <button type="button" class="tb-item" data-key="elite">💀 精英 12/20</button>
+        <button type="button" class="tb-item tb-equip" data-key="equip">🎒 装备</button>
+        <button type="button" class="tb-item" data-key="peach">🍑 桃子</button>
+      </div>
+    </div>
+    <div class="backdrop" id="backdrop-a" aria-hidden="true"></div>
+    <div class="modal-wrap" id="modal-a" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-inner ink-panel" id="modal-content-a">
+        <div class="ink-header"><span class="ico" id="hdr-ico-a"></span><span id="hdr-title-a"></span></div>
+        <div class="ink-body" id="hdr-body-a"></div>
+        <button type="button" class="btn-know" id="btn-know-a">知道了</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 方案 B ========== -->
+  <section class="scheme-card scheme-b" id="scheme-b">
+    <h2 class="scheme-head">方案 B：底部抽屉（Bottom Sheet）</h2>
+    <div class="mini-lobby">
+      <div class="top-bar tb-root" data-scheme="b">
+        <button type="button" class="tb-item" data-key="coin">💰 金币 1280</button>
+        <button type="button" class="tb-item" data-key="energy">⚡ 体力 x4</button>
+        <button type="button" class="tb-item" data-key="elite">💀 精英 12/20</button>
+        <button type="button" class="tb-item tb-equip" data-key="equip">🎒 装备</button>
+        <button type="button" class="tb-item" data-key="peach">🍑 桃子</button>
+      </div>
+    </div>
+    <div class="backdrop-b" id="backdrop-b"></div>
+    <div class="sheet" id="sheet-b">
+      <div class="ink-panel">
+        <div class="sheet-drag" id="sheet-drag-b">
+          <div class="drag-bar"></div>
+          <div class="sheet-header-inline"><span class="ico" id="hdr-ico-b"></span><span id="hdr-title-b"></span></div>
+        </div>
+        <div class="ink-body" id="hdr-body-b"></div>
+        <button type="button" class="btn-know" id="btn-know-b">知道了</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 方案 C ========== -->
+  <section class="scheme-card scheme-c" id="scheme-c">
+    <h2 class="scheme-head">方案 C：侧边滑出面板</h2>
+    <div class="mini-lobby">
+      <div class="top-bar tb-root" data-scheme="c">
+        <button type="button" class="tb-item" data-key="coin">💰 金币 1280</button>
+        <button type="button" class="tb-item" data-key="energy">⚡ 体力 x4</button>
+        <button type="button" class="tb-item" data-key="elite">💀 精英 12/20</button>
+        <button type="button" class="tb-item tb-equip" data-key="equip">🎒 装备</button>
+        <button type="button" class="tb-item" data-key="peach">🍑 桃子</button>
+      </div>
+    </div>
+    <div class="backdrop-c" id="backdrop-c"></div>
+    <div class="side-panel" id="side-c">
+      <div class="ink-panel">
+        <div class="ink-header"><span class="ico" id="hdr-ico-c"></span><span id="hdr-title-c"></span></div>
+        <div class="ink-body" id="hdr-body-c"></div>
+        <button type="button" class="btn-know" id="btn-know-c">知道了</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 方案 D ========== -->
+  <section class="scheme-card scheme-d" id="scheme-d">
+    <h2 class="scheme-head">方案 D：气泡卡片（Tooltip Card）</h2>
+    <div class="mini-lobby">
+      <div class="top-bar tb-root" data-scheme="d">
+        <button type="button" class="tb-item" data-key="coin">💰 金币 1280</button>
+        <button type="button" class="tb-item" data-key="energy">⚡ 体力 x4</button>
+        <button type="button" class="tb-item" data-key="elite">💀 精英 12/20</button>
+        <button type="button" class="tb-item tb-equip" data-key="equip">🎒 装备</button>
+        <button type="button" class="tb-item" data-key="peach">🍑 桃子</button>
+      </div>
+    </div>
+    <div class="backdrop-d" id="backdrop-d"></div>
+    <div class="bubble-card" id="bubble-d">
+      <div class="bubble-arrow down" id="bubble-arrow-d"></div>
+      <div class="bubble-inner">
+        <div class="ink-header"><span class="ico" id="hdr-ico-d"></span><span id="hdr-title-d"></span></div>
+        <div class="ink-body" id="hdr-body-d"></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+(function () {
+  var RESOURCE = {
+    coin: {
+      icon: '💰',
+      title: '金币',
+      sections: [
+        { h: '用途', html: '<p>购买装备、升级武器和护甲。</p>' },
+        { h: '获取方式', html: '<ul><li>打怪掉落：肉怪 7 金、盒子怪 9 金、普通怪 8 金</li><li>答对题目 +5 金</li><li>跑图里程碑 +50 金</li><li>击杀精英怪 +50 金</li></ul>' },
+        { tip: '精英怪死后地上会散落金币，记得去捡！' }
+      ]
+    },
+    energy: {
+      icon: '⚡',
+      title: '体力',
+      sections: [
+        { h: '用途', html: '<p>每次进入副本消耗 1 点体力。</p>' },
+        { h: '恢复规则', html: '<p>每天 5 点体力，凌晨自动恢复到 5 点。</p>' },
+        { tip: '体力不够了就明天再来吧！' }
+      ]
+    },
+    elite: {
+      icon: '💀',
+      title: '精英怪进度',
+      sections: [
+        { h: '说明', html: '<p>当前正在为解锁下一层而努力。</p>' },
+        { h: '解锁条件', html: '<p>在当前<strong>最深层</strong>击杀 20 只精英怪即可解锁下一层。</p>' },
+        { tip: '只有打最深层才算进度哦！' }
+      ]
+    },
+    equip: {
+      icon: '🎒',
+      title: '装备',
+      sections: [
+        { h: '武器', html: '<p>决定攻击距离和方式：铅笔近战快，橡皮远程慢。</p>' },
+        { h: '护甲', html: '<p>6 件套（头盔、护甲、护腕、护腿、鞋、手套），提升防御与血量。</p>' },
+        { h: '爆率', html: '<p>精英怪 1/1000 概率掉装备；每杀 200 只必掉一件（保底）。</p>' },
+        { tip: '第 6 层和第 12 层精英怪爆率翻倍！' }
+      ]
+    },
+    peach: {
+      icon: '🍑',
+      title: '桃子（社交）',
+      sections: [
+        { h: '规则', html: '<ul><li>每人每天获得 1 个桃子</li><li>不能自己吃，只能送给其他玩家</li><li>对方食用后体力 +1</li></ul>' },
+        { tip: '和朋友互送桃子，每天多打一次副本！' }
+      ]
+    }
+  };
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function buildBodyHtml(key) {
+    var data = RESOURCE[key];
+    if (!data) return '';
+    var parts = [];
+    var sections = data.sections;
+    for (var i = 0; i < sections.length; i++) {
+      var sec = sections[i];
+      if (sec.tip) {
+        parts.push('<div class="tip-box">💡 小贴士：' + escapeHtml(sec.tip) + '</div>');
+        continue;
+      }
+      var block = '';
+      if (sec.h) block += '<h4>' + escapeHtml(sec.h) + '</h4>';
+      block += sec.html;
+      parts.push(block);
+    }
+    return parts.join('');
+  }
+
+  function buildBodyCompact(key) {
+    var data = RESOURCE[key];
+    var html = '';
+    var s = data.sections;
+    for (var i = 0; i < s.length; i++) {
+      if (s[i].tip) continue;
+      if (s[i].h) html += '<h4>' + escapeHtml(s[i].h) + '</h4>';
+      html += s[i].html;
+    }
+    var tip = '';
+    for (var j = 0; j < s.length; j++) {
+      if (s[j].tip) {
+        tip = '<div class="tip-box">💡 ' + escapeHtml(s[j].tip) + '</div>';
+        break;
+      }
+    }
+    return html + tip;
+  }
+
+  /* —— 方案 A —— */
+  var backdropA = document.getElementById('backdrop-a');
+  var modalA = document.getElementById('modal-a');
+  var btnKnowA = document.getElementById('btn-know-a');
+
+  function openA(key) {
+    var d = RESOURCE[key];
+    document.getElementById('hdr-ico-a').textContent = d.icon;
+    document.getElementById('hdr-title-a').textContent = d.title;
+    document.getElementById('hdr-body-a').innerHTML = buildBodyHtml(key);
+    backdropA.classList.add('open');
+    modalA.classList.add('open');
+    backdropA.setAttribute('aria-hidden', 'false');
+    modalA.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeA() {
+    backdropA.classList.remove('open');
+    modalA.classList.remove('open');
+    backdropA.setAttribute('aria-hidden', 'true');
+    modalA.setAttribute('aria-hidden', 'true');
+  }
+
+  document.querySelector('#scheme-a .tb-root').addEventListener('click', function (e) {
+    var t = e.target.closest('.tb-item');
+    if (!t) return;
+    openA(t.getAttribute('data-key'));
+  });
+  backdropA.addEventListener('click', closeA);
+  btnKnowA.addEventListener('click', closeA);
+
+  /* —— 方案 B —— */
+  var backdropB = document.getElementById('backdrop-b');
+  var sheetB = document.getElementById('sheet-b');
+  var btnKnowB = document.getElementById('btn-know-b');
+  var sheetDrag = document.getElementById('sheet-drag-b');
+  var startY = 0;
+  var dragging = false;
+
+  function openB(key) {
+    var d = RESOURCE[key];
+    document.getElementById('hdr-ico-b').textContent = d.icon;
+    document.getElementById('hdr-title-b').textContent = d.title;
+    document.getElementById('hdr-body-b').innerHTML = buildBodyHtml(key);
+    backdropB.classList.add('open');
+    sheetB.classList.add('open');
+  }
+
+  function closeB() {
+    backdropB.classList.remove('open');
+    sheetB.classList.remove('open');
+  }
+
+  document.querySelector('#scheme-b .tb-root').addEventListener('click', function (e) {
+    var t = e.target.closest('.tb-item');
+    if (!t) return;
+    openB(t.getAttribute('data-key'));
+  });
+  backdropB.addEventListener('click', closeB);
+  btnKnowB.addEventListener('click', closeB);
+
+  sheetDrag.addEventListener('touchstart', function (e) {
+    dragging = true;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  sheetDrag.addEventListener('touchmove', function (e) {
+    if (!dragging) return;
+    var dy = e.touches[0].clientY - startY;
+    if (dy > 48) {
+      dragging = false;
+      closeB();
+    }
+  }, { passive: true });
+
+  sheetDrag.addEventListener('touchend', function () {
+    dragging = false;
+  });
+
+  /* —— 方案 C —— */
+  var backdropC = document.getElementById('backdrop-c');
+  var sideC = document.getElementById('side-c');
+  var btnKnowC = document.getElementById('btn-know-c');
+
+  function openC(key) {
+    var d = RESOURCE[key];
+    document.getElementById('hdr-ico-c').textContent = d.icon;
+    document.getElementById('hdr-title-c').textContent = d.title;
+    document.getElementById('hdr-body-c').innerHTML = buildBodyHtml(key);
+    backdropC.classList.add('open');
+    sideC.classList.add('open');
+  }
+
+  function closeC() {
+    backdropC.classList.remove('open');
+    sideC.classList.remove('open');
+  }
+
+  document.querySelector('#scheme-c .tb-root').addEventListener('click', function (e) {
+    var t = e.target.closest('.tb-item');
+    if (!t) return;
+    openC(t.getAttribute('data-key'));
+  });
+  backdropC.addEventListener('click', closeC);
+  btnKnowC.addEventListener('click', closeC);
+
+  /* —— 方案 D —— */
+  var backdropD = document.getElementById('backdrop-d');
+  var bubbleD = document.getElementById('bubble-d');
+  var bubbleArrow = document.getElementById('bubble-arrow-d');
+  var lastTrigger = null;
+
+  function positionBubble(triggerEl) {
+    var rect = triggerEl.getBoundingClientRect();
+    var bw = bubbleD.offsetWidth || Math.min(window.innerWidth - 32, 320);
+    var bh = bubbleD.offsetHeight || 180;
+    var pad = 8;
+    var gap = 10;
+    var cx = rect.left + rect.width / 2;
+    var spaceBelow = window.innerHeight - rect.bottom;
+    var placeBelow = spaceBelow >= bh + gap + 28 || rect.top < bh + gap + 20;
+
+    var left = cx - bw / 2;
+    left = Math.max(pad, Math.min(left, window.innerWidth - pad - bw));
+
+    var arrowLeft = cx - left - 10;
+    arrowLeft = Math.max(12, Math.min(arrowLeft, bw - 32));
+
+    var top;
+    /* 气泡在按钮下方：箭头在卡片顶端朝上指向按钮 → .up */
+    if (placeBelow) {
+      top = rect.bottom + gap;
+      bubbleArrow.className = 'bubble-arrow up';
+      bubbleArrow.style.top = '-9px';
+      bubbleArrow.style.bottom = 'auto';
+    } else {
+      top = rect.top - gap - bh;
+      bubbleArrow.className = 'bubble-arrow down';
+      bubbleArrow.style.bottom = '-9px';
+      bubbleArrow.style.top = 'auto';
+    }
+    bubbleArrow.style.left = arrowLeft + 'px';
+    bubbleArrow.style.right = 'auto';
+
+    bubbleD.style.left = left + 'px';
+    bubbleD.style.top = Math.max(pad, top) + 'px';
+    bubbleD.style.right = 'auto';
+    bubbleD.style.bottom = 'auto';
+  }
+
+  function openD(key, triggerEl) {
+    lastTrigger = triggerEl;
+    var d = RESOURCE[key];
+    document.getElementById('hdr-ico-d').textContent = d.icon;
+    document.getElementById('hdr-title-d').textContent = d.title;
+    document.getElementById('hdr-body-d').innerHTML = buildBodyCompact(key);
+    backdropD.classList.add('open');
+    bubbleD.classList.add('open');
+    requestAnimationFrame(function () {
+      positionBubble(triggerEl);
+      requestAnimationFrame(function () {
+        positionBubble(triggerEl);
+      });
+    });
+  }
+
+  function closeD() {
+    backdropD.classList.remove('open');
+    bubbleD.classList.remove('open');
+    lastTrigger = null;
+  }
+
+  document.querySelector('#scheme-d .tb-root').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var t = e.target.closest('.tb-item');
+    if (!t) return;
+    openD(t.getAttribute('data-key'), t);
+  });
+
+  backdropD.addEventListener('click', closeD);
+
+  window.addEventListener('resize', function () {
+    if (backdropD.classList.contains('open') && lastTrigger) {
+      positionBubble(lastTrigger);
+    }
+  });
+
+  window.addEventListener('scroll', function () {
+    if (backdropD.classList.contains('open') && lastTrigger) {
+      positionBubble(lastTrigger);
+    }
+  }, true);
+})();
+  </script>
+</body>
+</html>
