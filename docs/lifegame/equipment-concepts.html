@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+  <title>Life Game · 装备界面交互方案</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      background: #080c08;
+      color: #f2f5f0;
+      font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+      padding: 12px 10px 32px;
+      line-height: 1.45;
+      min-width: 0;
+    }
+
+    .doc-title {
+      font-size: clamp(18px, 4.5vw, 24px);
+      font-weight: 700;
+      color: #e8c84a;
+      text-align: center;
+      margin-bottom: 4px;
+      letter-spacing: 0.06em;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .doc-sub {
+      font-size: clamp(12px, 3.2vw, 15px);
+      color: rgba(255,255,255,0.68);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .divider {
+      margin: 28px 0 16px;
+      border: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(220, 196, 128, 0.55), rgba(232, 200, 74, 0.35), rgba(220, 196, 128, 0.55), transparent);
+      border-radius: 2px;
+    }
+
+    .scheme-head {
+      margin-bottom: 10px;
+    }
+
+    .scheme-head h2 {
+      font-size: clamp(15px, 3.8vw, 18px);
+      font-weight: 700;
+      color: #dcc480;
+      margin-bottom: 4px;
+    }
+
+    .scheme-head p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.62);
+    }
+
+    /* 横屏场景容器 */
+    .scene {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 220px;
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 8px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+      border: 1px solid rgba(220, 196, 128, 0.35);
+    }
+
+    .bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(165deg,
+        #4a7a58 0%,
+        #325c40 28%,
+        #1f3d2a 55%,
+        #0f2418 100%);
+    }
+
+    .bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 100% 70% at 50% 0%, rgba(0,0,0,0.25) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 45%);
+    }
+
+    .scene-inner {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 6px 8px 8px;
+      min-height: 0;
+      background: rgba(6, 12, 8, 0.45);
+      backdrop-filter: blur(6px);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      margin-bottom: 6px;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 36px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #dcc480;
+      background: rgba(8, 14, 10, 0.75);
+      border: 1px solid rgba(220, 196, 128, 0.45);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.25s, border-color 0.25s, transform 0.15s;
+    }
+
+    .btn-back:active { transform: scale(0.97); }
+
+    .btn-back:hover {
+      background: rgba(18, 28, 18, 0.85);
+      border-color: rgba(232, 200, 74, 0.65);
+    }
+
+    .gold-pill {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #e8c64a;
+      font-variant-numeric: tabular-nums;
+      background: rgba(8, 14, 10, 0.72);
+      border: 1px solid rgba(220, 196, 128, 0.4);
+      border-radius: 999px;
+    }
+
+    .scroll-frame {
+      flex: 1;
+      min-height: 0;
+      border: 1px solid rgba(220, 196, 128, 0.42);
+      border-radius: 12px;
+      background: rgba(4, 10, 6, 0.55);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scroll-frame::before,
+    .scroll-frame::after {
+      content: "";
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      width: 5px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, rgba(220,196,128,0.15), rgba(232,200,74,0.45), rgba(220,196,128,0.15));
+      opacity: 0.85;
+    }
+
+    .scroll-frame::before { left: 4px; }
+    .scroll-frame::after { right: 4px; }
+
+    .btn-gold {
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a1208;
+      background: linear-gradient(180deg, #f0dc98, #dcc480);
+      border: 1px solid rgba(255,245,200,0.5);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: filter 0.2s, transform 0.15s;
+    }
+
+    .btn-gold:active { transform: scale(0.97); }
+    .btn-gold:hover { filter: brightness(1.06); }
+
+    .btn-ghost {
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #dcc480;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(220, 196, 128, 0.35);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(220, 196, 128, 0.12);
+      border-color: rgba(232, 200, 74, 0.5);
+    }
+
+    .detail-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e8c84a;
+      margin-bottom: 6px;
+    }
+
+    .detail-meta {
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      line-height: 1.5;
+    }
+
+    .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      background: rgba(220, 196, 128, 0.15);
+      color: #dcc480;
+      border: 1px solid rgba(220, 196, 128, 0.25);
+    }
+
+    /* ---------- 方案 A：纸片人 ---------- */
+    .a-body {
+      display: flex;
+      gap: 8px;
+      height: 100%;
+      padding: 8px 10px 10px;
+      min-height: 0;
+    }
+
+    .a-left {
+      flex: 0 0 42%;
+      max-width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .paper-doll {
+      position: relative;
+      width: min(38vw, 160px);
+      height: min(52vw, 200px);
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));
+    }
+
+    .pd-head, .pd-body, .pd-arm-l, .pd-arm-r, .pd-leg-l, .pd-leg-r {
+      position: absolute;
+      background: rgba(255,255,255,0.14);
+      border: 1.5px solid rgba(220,196,128,0.5);
+      border-radius: 50%;
+      transition: box-shadow 0.25s, border-color 0.25s, transform 0.2s;
+    }
+
+    .pd-head {
+      width: 36%;
+      height: 22%;
+      left: 32%;
+      top: 2%;
+      border-radius: 45% 45% 40% 40%;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .pd-body {
+      width: 44%;
+      height: 36%;
+      left: 28%;
+      top: 24%;
+      border-radius: 38% 38% 30% 30%;
+    }
+
+    .pd-arm-l {
+      width: 16%;
+      height: 28%;
+      left: 10%;
+      top: 28%;
+      border-radius: 40%;
+      transform: rotate(12deg);
+    }
+
+    .pd-arm-r {
+      width: 16%;
+      height: 28%;
+      right: 10%;
+      top: 28%;
+      border-radius: 40%;
+      transform: rotate(-12deg);
+    }
+
+    .pd-leg-l {
+      width: 18%;
+      height: 34%;
+      left: 30%;
+      bottom: 2%;
+      border-radius: 35%;
+      transform: rotate(-4deg);
+    }
+
+    .pd-leg-r {
+      width: 18%;
+      height: 34%;
+      right: 30%;
+      bottom: 2%;
+      border-radius: 35%;
+      transform: rotate(4deg);
+    }
+
+    .slot-pin {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: rgba(8, 14, 10, 0.88);
+      border: 2px solid rgba(220,196,128,0.6);
+      cursor: pointer;
+      z-index: 5;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .slot-pin:hover { transform: scale(1.08); }
+
+    .slot-pin.active {
+      box-shadow: 0 0 0 2px rgba(232,200,74,0.55);
+      border-color: #e8c84a;
+    }
+
+    .slot-pin[data-slot="helmet"] { left: 50%; top: -4px; transform: translateX(-50%); }
+    .slot-pin[data-slot="armor"] { left: 50%; top: 38%; transform: translate(-50%, -50%); }
+    .slot-pin[data-slot="bracer"] { right: -6px; top: 32%; }
+    .slot-pin[data-slot="leg"] { left: 22%; bottom: -4px; }
+    .slot-pin[data-slot="boot"] { right: 18%; bottom: -4px; }
+    .slot-pin[data-slot="glove"] { left: -6px; top: 30%; }
+
+    .slot-pin[data-slot="helmet"].active { transform: translateX(-50%) scale(1.08); }
+
+    .a-right {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .weapon-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.28);
+      border: 1px dashed rgba(220,196,128,0.35);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .weapon-strip:hover {
+      border-color: rgba(232,200,74,0.55);
+      background: rgba(0,0,0,0.38);
+    }
+
+    .weapon-strip.active-w {
+      border-style: solid;
+      border-color: rgba(232,200,74,0.65);
+      box-shadow: inset 0 0 0 1px rgba(232,200,74,0.2);
+    }
+
+    .weapon-emo { font-size: 28px; line-height: 1; }
+
+    .weapon-txt {
+      flex: 1;
+      min-width: 0;
+      font-size: 12px;
+    }
+
+    .weapon-txt strong {
+      display: block;
+      color: #e8c84a;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .a-panel {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(4, 10, 6, 0.65);
+      border: 1px solid rgba(220,196,128,0.28);
+      transition: opacity 0.2s;
+    }
+
+    /* ---------- 方案 B：卡牌墙 ---------- */
+    .b-main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 6px 8px 8px;
+      gap: 8px;
+    }
+
+    .b-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .b-summary span {
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(220,196,128,0.22);
+    }
+
+    .b-grid {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .b-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .b-card {
+      flex: 1;
+      min-width: 0;
+      max-width: 120px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(20,32,22,0.9), rgba(8,14,10,0.92));
+      border: 1px solid rgba(220,196,128,0.45);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      cursor: pointer;
+      position: relative;
+      perspective: 800px;
+      transition: transform 0.25s;
+    }
+
+    .b-card:active { transform: scale(0.98); }
+
+    .b-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+
+    .b-card.flipped .b-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .b-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .b-face.back {
+      transform: rotateY(180deg);
+      background: rgba(6, 14, 8, 0.95);
+      justify-content: flex-start;
+      align-items: stretch;
+      padding: 8px;
+    }
+
+    .b-face .emo { font-size: clamp(22px, 7vw, 32px); }
+
+    .b-face .name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #e8c84a;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    .b-face .lv {
+      font-size: 12px;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .b-deco::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 8px;
+      border: 1px solid rgba(220,196,128,0.2);
+      pointer-events: none;
+    }
+
+    /* ---------- 方案 C：背包格子 ---------- */
+    .c-main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 6px 8px;
+      gap: 8px;
+      position: relative;
+    }
+
+    .c-weapon-row {
+      flex: 0 0 auto;
+    }
+
+    .c-slot-lg {
+      width: 100%;
+      max-width: 200px;
+      margin: 0 auto;
+      aspect-ratio: 2.2 / 1;
+      border-radius: 12px;
+      border: 2px solid rgba(220,196,128,0.45);
+      background: rgba(0,0,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+
+    .c-slot-lg.active {
+      border-color: #e8c84a;
+      box-shadow: 0 0 0 2px rgba(232,200,74,0.25);
+    }
+
+    .c-armor-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .c-cell {
+      border-radius: 10px;
+      border: 2px solid rgba(220,196,128,0.35);
+      background: rgba(0,0,0,0.3);
+      min-height: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .c-cell.empty {
+      border-style: dashed;
+      opacity: 0.85;
+    }
+
+    .c-cell .e { font-size: clamp(20px, 6vw, 26px); }
+    .c-cell .lv { font-size: 12px; color: #dcc480; font-weight: 700; }
+
+    .c-cell.active {
+      border-color: #e8c84a;
+      box-shadow: inset 0 0 12px rgba(232,200,74,0.12);
+    }
+
+    .c-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 55%;
+      background: rgba(6, 12, 8, 0.94);
+      border-top: 2px solid rgba(220,196,128,0.55);
+      border-radius: 14px 14px 0 0;
+      padding: 12px;
+      transform: translateY(104%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 20;
+      overflow: auto;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.45);
+    }
+
+    .c-sheet.open {
+      transform: translateY(0);
+    }
+
+    .c-sheet-handle {
+      width: 40px;
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(220,196,128,0.4);
+      margin: -4px auto 10px;
+    }
+
+    /* ---------- 方案 D：卷轴展开 ---------- */
+    .d-main {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 6px 8px 8px 14px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .d-scroll {
+      position: relative;
+      padding-left: 14px;
+    }
+
+    .d-gold-line {
+      position: absolute;
+      left: 4px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, rgba(220,196,128,0.2), #dcc480 15%, #e8c84a 50%, #dcc480 85%, rgba(220,196,128,0.2));
+      box-shadow: 0 0 8px rgba(232,200,74,0.35);
+    }
+
+    .d-row {
+      margin-bottom: 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(220,196,128,0.3);
+      background: rgba(0,0,0,0.28);
+      overflow: hidden;
+      transition: border-color 0.25s, background 0.25s;
+    }
+
+    .d-row.open {
+      border-color: rgba(232,200,74,0.55);
+      background: rgba(10, 20, 14, 0.55);
+    }
+
+    .d-row-h {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .d-row-h .emo { font-size: 20px; }
+    .d-row-h .grow { flex: 1; min-width: 0; }
+    .d-row-h .t1 {
+      font-weight: 700;
+      color: #e8c84a;
+    }
+
+    .d-row-h .t2 { color: rgba(255,255,255,0.68); }
+
+    .d-chev {
+      transition: transform 0.3s;
+      color: #dcc480;
+      font-size: 12px;
+    }
+
+    .d-row.open .d-chev { transform: rotate(90deg); }
+
+    .d-row-body {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.25s;
+      border-top: 1px solid transparent;
+    }
+
+    .d-row.open .d-row-body {
+      max-height: 200px;
+      opacity: 1;
+      border-top-color: rgba(220,196,128,0.2);
+    }
+
+    .d-row-in {
+      padding: 10px 12px 12px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(24px);
+      padding: 10px 16px;
+      font-size: 12px;
+      color: #1a1208;
+      background: #dcc480;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 9999;
+      max-width: 92vw;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <h1 class="doc-title">装备界面 · 四套交互原型</h1>
+  <p class="doc-sub">横屏预览 · 水墨画轴 · 纯 HTML/CSS/JS · 手机浏览器</p>
+
+  <!-- ========== 方案 A ========== -->
+  <hr class="divider">
+  <div class="scheme-head">
+    <h2>方案 A · 角色纸片人风（Character Sheet）</h2>
+    <p>左侧简笔小人 + 六处槽位；右侧武器条与详情。点击槽位或武器查看升级/购买。</p>
+  </div>
+  <div class="scene" id="scene-a">
+    <div class="bg"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <button type="button" class="btn-back" data-toast="返回（原型）">← 返回</button>
+        <div class="gold-pill" id="gold-a">💰 <span id="gold-num-a">1280</span></div>
+      </div>
+      <div class="scroll-frame">
+        <div class="a-body">
+          <div class="a-left">
+            <div class="paper-doll" id="paper-doll">
+              <div class="pd-head"></div>
+              <div class="pd-body"></div>
+              <div class="pd-arm-l"></div>
+              <div class="pd-arm-r"></div>
+              <div class="pd-leg-l"></div>
+              <div class="pd-leg-r"></div>
+              <button type="button" class="slot-pin" data-slot="helmet" title="头盔">⛑️</button>
+              <button type="button" class="slot-pin" data-slot="armor" title="护甲">🛡️</button>
+              <button type="button" class="slot-pin" data-slot="bracer" title="护腕">🩹</button>
+              <button type="button" class="slot-pin" data-slot="leg" title="护腿">🦿</button>
+              <button type="button" class="slot-pin" data-slot="boot" title="鞋">👟</button>
+              <button type="button" class="slot-pin" data-slot="glove" title="手套">🧤</button>
+            </div>
+          </div>
+          <div class="a-right">
+            <div class="weapon-strip" id="a-weapon-strip" tabindex="0" role="button">
+              <span class="weapon-emo" id="a-w-emo">🖋️</span>
+              <div class="weapon-txt" id="a-w-txt"></div>
+            </div>
+            <div class="a-panel" id="a-detail"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 方案 B ========== -->
+  <hr class="divider">
+  <div class="scheme-head">
+    <h2>方案 B · 卡牌墙风（Card Wall）</h2>
+    <p>上排：头盔、护甲、护腕、武器（4 张）；下排：护腿、鞋、手套 + 预留扩展格（4 格视觉）。共 7 件槽位。点击翻牌查看详情与操作。</p>
+  </div>
+  <div class="scene" id="scene-b">
+    <div class="bg"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <button type="button" class="btn-back" data-toast="返回（原型）">← 返回</button>
+        <div class="gold-pill">💰 1280</div>
+      </div>
+      <div class="scroll-frame">
+        <div class="b-main">
+          <div class="b-summary" id="b-summary"></div>
+          <div class="b-grid" id="b-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 方案 C ========== -->
+  <hr class="divider">
+  <div class="scheme-head">
+    <h2>方案 C · 背包格子风（Grid Inventory）</h2>
+    <p>顶部武器大格，下方 3×2 护甲格。点格子弹出底栏详情。</p>
+  </div>
+  <div class="scene" id="scene-c">
+    <div class="bg"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <button type="button" class="btn-back" data-toast="返回（原型）">← 返回</button>
+        <div class="gold-pill">💰 1280</div>
+      </div>
+      <div class="scroll-frame">
+        <div class="c-main">
+          <div class="c-weapon-row">
+            <div class="c-slot-lg" id="c-weapon" tabindex="0" role="button"></div>
+          </div>
+          <div class="c-armor-grid" id="c-grid"></div>
+          <div class="c-sheet" id="c-sheet">
+            <div class="c-sheet-handle"></div>
+            <div id="c-sheet-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 方案 D ========== -->
+  <hr class="divider">
+  <div class="scheme-head">
+    <h2>方案 D · 卷轴展开风（Scroll Unfurl）</h2>
+    <p>纵向卷轴分区：武器 → 六件护甲；左侧金线串联，点击行展开详情。</p>
+  </div>
+  <div class="scene" id="scene-d">
+    <div class="bg"></div>
+    <div class="scene-inner">
+      <div class="top-bar">
+        <button type="button" class="btn-back" data-toast="返回（原型）">← 返回</button>
+        <div class="gold-pill">💰 1280</div>
+      </div>
+      <div class="scroll-frame">
+        <div class="d-main">
+          <div class="d-scroll">
+            <div class="d-gold-line" aria-hidden="true"></div>
+            <div id="d-rows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+(function () {
+  var DATA = {
+    gold: 1280,
+    weapon: {
+      key: 'weapon',
+      kind: 'weapon',
+      typeName: '钢笔',
+      emoji: '🖋️',
+      level: 5,
+      titleName: '学习委员',
+      attack: 8,
+      range: 3,
+      attackSpeed: 0.32,
+      shape: 'line',
+      shapeLabel: '远程 line'
+    },
+    slots: {
+      helmet: {
+        key: 'helmet', kind: 'armor', slotLabel: '头盔', typeName: '头盔', emoji: '⛑️',
+        level: 3, titleName: '课代表', defense: 1.5, hp: 0
+      },
+      armor: {
+        key: 'armor', kind: 'armor', slotLabel: '护甲', typeName: '护甲', emoji: '🛡️',
+        level: 4, titleName: '班干部', defense: 2.0, hp: 1
+      },
+      bracer: {
+        key: 'bracer', kind: 'armor', slotLabel: '护腕', typeName: '护腕', emoji: '🩹',
+        level: 2, titleName: '小组长', defense: 1.0, hp: 0
+      },
+      leg: {
+        key: 'leg', kind: 'armor', slotLabel: '护腿', typeName: '护腿', emoji: '🦿',
+        level: 1, titleName: '同学', defense: 0.5, hp: 0
+      },
+      boot: {
+        key: 'boot', kind: 'armor', slotLabel: '鞋', typeName: '鞋', emoji: '👟',
+        level: 2, titleName: '小组长', defense: 1.0, hp: 0
+      },
+      glove: {
+        key: 'glove', kind: 'armor', slotLabel: '手套', typeName: '手套', emoji: '🧤',
+        empty: true, level: 0, titleName: '', defense: 0, hp: 0
+      }
+    }
+  };
+
+  function tierForLevel(lv) {
+    if (lv >= 22) return '国际奥赛金牌';
+    if (lv >= 12) return '学生会主席';
+    if (lv >= 6) return '班长';
+    return '同学';
+  }
+
+  function fullEquipName(item) {
+    if (item.kind === 'weapon') {
+      return 'Lv' + item.level + '「' + item.titleName + '」' + item.typeName;
+    }
+    if (item.empty) return '（未装备）';
+    return 'Lv' + item.level + '「' + item.titleName + '」' + item.typeName;
+  }
+
+  function formatWeaponLine(w) {
+    return '攻击力 ' + w.attack + ' · 射程 ' + w.range + '格 · 攻速 ' + w.attackSpeed + 's · ' + w.shapeLabel;
+  }
+
+  function formatArmorLine(a) {
+    if (a.empty) return '空槽 · 可购买装备';
+    return '防御 ' + a.defense + ' · 额外血量 +' + a.hp;
+  }
+
+  function detailHtml(item) {
+    var h = '';
+    if (item.kind === 'weapon') {
+      h += '<div class="detail-title">' + item.emoji + ' ' + fullEquipName(item) + '</div>';
+      h += '<div class="detail-meta">';
+      h += '<span class="tag">' + tierForLevel(item.level) + '</span> ';
+      h += '<span class="tag">武器</span><br><br>';
+      h += formatWeaponLine(item);
+      h += '</div>';
+    } else if (item.empty) {
+      h += '<div class="detail-title">' + item.emoji + ' ' + item.slotLabel + ' · 空</div>';
+      h += '<div class="detail-meta">尚未装备。可从商店购买「手套」类护甲。</div>';
+    } else {
+      h += '<div class="detail-title">' + item.emoji + ' ' + fullEquipName(item) + '</div>';
+      h += '<div class="detail-meta">';
+      h += '<span class="tag">' + tierForLevel(item.level) + '</span> ';
+      h += '<span class="tag">' + item.slotLabel + '</span><br><br>';
+      h += formatArmorLine(item);
+      h += '</div>';
+    }
+    h += '<div class="detail-actions">';
+    if (!item.empty) {
+      h += '<button type="button" class="btn-gold" data-act="upgrade">升级</button>';
+      h += '<button type="button" class="btn-ghost" data-act="sell">出售（示意）</button>';
+    } else {
+      h += '<button type="button" class="btn-gold" data-act="buy">购买</button>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function totalStats() {
+    var w = DATA.weapon;
+    var sumDef = 0;
+    var sumHp = 0;
+    var k;
+    for (k in DATA.slots) {
+      if (DATA.slots[k].empty) continue;
+      sumDef += DATA.slots[k].defense;
+      sumHp += DATA.slots[k].hp;
+    }
+    return { atk: w.attack, def: sumDef, hp: sumHp };
+  }
+
+  /* Toast */
+  var toastEl = document.getElementById('toast');
+  var toastT = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(function () { toastEl.classList.remove('show'); }, 2000);
+  }
+
+  document.body.addEventListener('click', function (ev) {
+    var el = ev.target.closest && ev.target.closest('[data-toast]');
+    if (el) toast(el.getAttribute('data-toast'));
+  });
+
+  document.body.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-act]');
+    if (!t) return;
+    var act = t.getAttribute('data-act');
+    if (act === 'upgrade') {
+      toast('升级（示意）：消耗金币提升等级与冠名');
+      var g = document.getElementById('gold-num-a');
+      if (g) { var n = parseInt(g.textContent, 10) || 0; g.textContent = Math.max(0, n - 50); }
+    } else if (act === 'buy') {
+      toast('购买（示意）：打开商店选择「手套」');
+    } else if (act === 'sell') {
+      toast('出售（示意）');
+    } else if (act === 'extinfo') {
+      toast('扩展槽位 · 后续版本开放（示意）');
+    }
+  });
+
+  /* ----- 方案 A ----- */
+  var aDetail = document.getElementById('a-detail');
+  var aWeaponStrip = document.getElementById('a-weapon-strip');
+  var aWTxt = document.getElementById('a-w-txt');
+
+  function setActivePins(activeKey) {
+    document.querySelectorAll('#paper-doll .slot-pin').forEach(function (p) {
+      p.classList.toggle('active', p.getAttribute('data-slot') === activeKey);
+    });
+    aWeaponStrip.classList.toggle('active-w', activeKey === 'weapon');
+  }
+
+  function renderA(itemKey) {
+    var item = itemKey === 'weapon' ? DATA.weapon : DATA.slots[itemKey];
+    aDetail.style.opacity = '0.5';
+    setTimeout(function () {
+      aDetail.innerHTML = detailHtml(item);
+      aDetail.style.opacity = '1';
+    }, 90);
+  }
+
+  function initA() {
+    var w = DATA.weapon;
+    aWTxt.innerHTML = '<strong>' + fullEquipName(w) + '</strong>' + formatWeaponLine(w);
+    document.querySelectorAll('#paper-doll .slot-pin').forEach(function (pin) {
+      pin.addEventListener('click', function () {
+        var k = pin.getAttribute('data-slot');
+        setActivePins(k);
+        renderA(k);
+      });
+    });
+    aWeaponStrip.addEventListener('click', function () {
+      setActivePins('weapon');
+      renderA('weapon');
+    });
+    setActivePins('helmet');
+    renderA('helmet');
+  }
+
+  /* ----- 方案 B ----- */
+  function initB() {
+    var summary = document.getElementById('b-summary');
+    var st = totalStats();
+    summary.innerHTML =
+      '<span>总攻击 ' + st.atk + '</span>' +
+      '<span>总防御 ' + st.def.toFixed(1) + '</span>' +
+      '<span>额外血量 +' + st.hp + '</span>';
+
+    var orderTop = ['helmet', 'armor', 'bracer', 'weapon'];
+    var orderBot = ['leg', 'boot', 'glove', '_extra'];
+    var grid = document.getElementById('b-grid');
+
+    function cardHtml(key) {
+      var item;
+      if (key === 'weapon') item = DATA.weapon;
+      else if (key === '_extra') {
+        item = {
+          key: '_extra', kind: 'extra', slotLabel: '扩展', typeName: '卷轴槽位',
+          emoji: '📜', empty: true, level: 0, titleName: '', defense: 0, hp: 0
+        };
+      } else item = DATA.slots[key];
+
+      var frontName = item.kind === 'weapon' ? item.typeName : (item.kind === 'extra' ? '待定' : (item.empty ? '空' : item.typeName));
+      var frontLv = item.kind === 'extra' ? '—' : (item.empty ? '—' : 'Lv ' + item.level);
+      var id = 'b-card-' + key;
+
+      var html = '<div class="b-card b-deco" id="' + id + '" data-key="' + key + '">';
+      html += '<div class="b-card-inner">';
+      html += '<div class="b-face front">';
+      html += '<span class="emo">' + item.emoji + '</span>';
+      html += '<span class="name">' + frontName + '</span>';
+      html += '<span class="lv">' + frontLv + '</span>';
+      html += '</div>';
+      html += '<div class="b-face back">' + (item.kind === 'extra'
+        ? '<div class="detail-title">📜 卷轴扩展格</div><div class="detail-meta">可用于后续新部位或宝石孔位（示意）。</div><div class="detail-actions"><button type="button" class="btn-ghost" data-act="extinfo">了解更多</button></div>'
+        : detailHtml(item)) + '</div>';
+      html += '</div></div>';
+      return html;
+    }
+
+    var rowTop = document.createElement('div');
+    rowTop.className = 'b-row';
+    orderTop.forEach(function (k) {
+      rowTop.insertAdjacentHTML('beforeend', cardHtml(k));
+    });
+    var rowBot = document.createElement('div');
+    rowBot.className = 'b-row';
+    orderBot.forEach(function (k) {
+      rowBot.insertAdjacentHTML('beforeend', cardHtml(k));
+    });
+    grid.appendChild(rowTop);
+    grid.appendChild(rowBot);
+
+    grid.querySelectorAll('.b-card').forEach(function (card) {
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('[data-act]') || e.target.closest('.detail-actions')) return;
+        var was = card.classList.contains('flipped');
+        grid.querySelectorAll('.b-card').forEach(function (c) { c.classList.remove('flipped'); });
+        if (!was) card.classList.add('flipped');
+      });
+    });
+  }
+
+  /* ----- 方案 C ----- */
+  function initC() {
+    var w = DATA.weapon;
+    var weaponEl = document.getElementById('c-weapon');
+    weaponEl.innerHTML =
+      '<span class="e">' + w.emoji + '</span><div style="font-size:12px;text-align:left"><strong style="color:#e8c84a">' +
+      fullEquipName(w) + '</strong><br>' + formatWeaponLine(w) + '</div>';
+
+    var armorOrder = ['helmet', 'armor', 'bracer', 'leg', 'boot', 'glove'];
+    var cgrid = document.getElementById('c-grid');
+    var sheet = document.getElementById('c-sheet');
+    var sheetContent = document.getElementById('c-sheet-content');
+
+    armorOrder.forEach(function (k) {
+      var a = DATA.slots[k];
+      var cell = document.createElement('div');
+      cell.className = 'c-cell' + (a.empty ? ' empty' : '');
+      cell.dataset.key = k;
+      if (a.empty) {
+        cell.innerHTML = '<span class="e" style="opacity:0.45">🧤</span><span class="lv" style="opacity:0.6">空</span>';
+      } else {
+        cell.innerHTML = '<span class="e">' + a.emoji + '</span><span class="lv">Lv' + a.level + '</span>';
+      }
+      cgrid.appendChild(cell);
+    });
+
+    function openSheet(item, activeCell) {
+      cgrid.querySelectorAll('.c-cell').forEach(function (c) { c.classList.remove('active'); });
+      if (activeCell) activeCell.classList.add('active');
+      sheetContent.innerHTML = detailHtml(item);
+      sheet.classList.add('open');
+    }
+
+    weaponEl.addEventListener('click', function () {
+      cgrid.querySelectorAll('.c-cell').forEach(function (c) { c.classList.remove('active'); });
+      weaponEl.classList.add('active');
+      sheetContent.innerHTML = detailHtml(DATA.weapon);
+      sheet.classList.add('open');
+    });
+
+    cgrid.querySelectorAll('.c-cell').forEach(function (cell) {
+      cell.addEventListener('click', function () {
+        weaponEl.classList.remove('active');
+        var k = cell.dataset.key;
+        openSheet(DATA.slots[k], cell);
+      });
+    });
+
+    sheet.addEventListener('click', function (e) {
+      if (e.target === sheet || e.target.classList.contains('c-sheet-handle')) {
+        sheet.classList.remove('open');
+        cgrid.querySelectorAll('.c-cell').forEach(function (c) { c.classList.remove('active'); });
+        weaponEl.classList.remove('active');
+      }
+    });
+  }
+
+  /* ----- 方案 D ----- */
+  function initD() {
+    var rows = document.getElementById('d-rows');
+    var keys = ['weapon', 'helmet', 'armor', 'bracer', 'leg', 'boot', 'glove'];
+
+    keys.forEach(function (k) {
+      var item = k === 'weapon' ? DATA.weapon : DATA.slots[k];
+      var row = document.createElement('div');
+      row.className = 'd-row';
+      var h = document.createElement('div');
+      h.className = 'd-row-h';
+      var label = k === 'weapon' ? '武器' : DATA.slots[k].slotLabel;
+      var sub = item.kind === 'weapon' ? formatWeaponLine(item) : formatArmorLine(item);
+      h.innerHTML =
+        '<span class="emo">' + item.emoji + '</span>' +
+        '<div class="grow"><div class="t1">' + label + ' · ' + fullEquipName(item) + '</div>' +
+        '<div class="t2">' + sub + '</div></div>' +
+        '<span class="d-chev">▶</span>';
+      var body = document.createElement('div');
+      body.className = 'd-row-body';
+      body.innerHTML = '<div class="d-row-in">' + detailHtml(item) + '</div>';
+      h.addEventListener('click', function () {
+        row.classList.toggle('open');
+      });
+      row.appendChild(h);
+      row.appendChild(body);
+      rows.appendChild(row);
+    });
+  }
+
+  initA();
+  initB();
+  initC();
+  initD();
+})();
+  </script>
+</body>
+</html>
